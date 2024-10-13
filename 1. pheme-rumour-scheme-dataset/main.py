@@ -1,4 +1,5 @@
 import os
+import csv
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -10,6 +11,7 @@ charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
+# Pick a folder
 FOLDER = putin
 
 
@@ -18,12 +20,14 @@ FOLDER = putin
 # Get the current working directory
 current_directory = os.getcwd()
 
-# Create new empty global graph G (Un Directed Graph)
-G = nx.Graph()
+# Un Directed Graph for tweet netweork
+T = nx.Graph()
+
+# Directed graph for following network
+F = nx.DiGraph()
 
 
-
-
+# TODO: IS weight necessary, otherwise remove this function, function is only necessary for weight tracker
 def place_edge(G, first_node, second_node):
     """ Places an edges between two nodes in graph G. Initialzie the weight attribute with start weight 1
     or increases the weight of the edge attribute if the edge already exists.
@@ -37,7 +41,7 @@ def place_edge(G, first_node, second_node):
         G.add_edge(first_node, second_node, weight = 1)
 
 
-def place_nodes_in_graph(G, parent, tweet_id):
+def add_tweet(G, parent, tweet_id):
     # Add nodes
     if parent not in G:
         G.add_node(parent, color = 'purple')
@@ -45,31 +49,72 @@ def place_nodes_in_graph(G, parent, tweet_id):
 
     # Place edge
     place_edge(G, parent, tweet_id)
+    
 
 
 # Function to recursively traverse the tweet thread and generate connections
-def create_connections(G, thread, parent = None):
+def tweet_connections(G, thread, parent = None):
     for tweet_id, replies in thread.items():
         if parent:
             print(f"Connection: {parent} -> {tweet_id}")
-            place_nodes_in_graph(G, parent, tweet_id)
-
-        else: # source tweet
+            add_tweet(G, parent, tweet_id)
+        else:                                                                               # Source tweet
             G.add_node(tweet_id, color = 'red')
 
             
         # If there are nested replies, recursively process them
         if isinstance(replies, dict) and replies:
-            create_connections(G, replies, tweet_id)
+            tweet_connections(G, replies, tweet_id)
+
+
+def add_follower(G, follower, followed):
+    # Add nodes
+    G.add_node(follower, color = 'purple')
+    G.add_node(followed, color = 'purple')
+
+    # Place edge
+    place_edge(G, follower, followed)
 
 
 
 
-def plot_graph_tweets(G):
+# Export
+def position_to_csv(pos, graph_name):
+    """ Exports dictionary of positions of node, created by NetworkX spring_layout.
+    @param pos: position disctionary.
+    @param graph_name: name of graph (tweet or following) with folder name.
+    """
+    with open('pos_dic_'+ graph_name + '.csv', 'w') as f:
+        for key in pos.keys():
+            f.write("%s,%s,%s\n"%(key, pos[key][0], pos[key][1]))
+
+# Import
+def csv_dict_position(pos, graph_name):
+    """ Imports the position dictionary, for each node there is a x,y-coordinate.
+    @param pos: empty position dictionary.
+    @param graph_name: name of graph (tweet or following) with folder name.
+    """
+    with open('pos_dic_'+ graph_name + '.csv', newline='') as csvfile:
+        data = csv.reader(csvfile)
+        for row in data:
+            pos.setdefault(row[0])
+            pos[row[0]] = [float(row[1]), float(row[2])]               
+
+
+
+
+def plot_graph(G, network):
     fig, ax = plt.subplots(figsize=(12, 7))
 
     pos = nx.spring_layout(G, k=0.155, seed=3968461)
+    # position_to_csv(pos, FOLDER + "_" + network)
+    # pos = {} 
+    # pos = csv_dict_position(pos, FOLDER + "_" + network)
+
     node_color = [G.nodes[n]['color'] for n in G.nodes]
+
+
+    print("check")
 
     nx.draw_networkx(
             G,
@@ -81,14 +126,19 @@ def plot_graph_tweets(G):
             alpha = 0.4,
         )
 
-    # Create a legend using mpatches for the source and reply colors
-    source_patch = mpatches.Patch(color='red', label='Source Tweet')
-    reply_patch = mpatches.Patch(color='purple', label='Reply Tweet')
-    plt.legend(handles=[source_patch, reply_patch])
+    if network == "tweets":
+        # Create a legend using mpatches for the source and reply colors
+        source_patch = mpatches.Patch(color='red', label='Source Tweet')
+        reply_patch = mpatches.Patch(color='purple', label='Reply Tweet')
+        plt.legend(handles=[source_patch, reply_patch])
+    else:
+        user_patch = mpatches.Patch(color='purple', label='User')
+        plt.legend(handles=[user_patch])
+
 
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
-    ax.set_title(f"Folder: {FOLDER}, network of tweets", font)
+    ax.set_title(f"Folder: {FOLDER}, network of {network}", font)
     # Change font color for legend
     font["color"] = "r"
 
@@ -102,47 +152,43 @@ def plot_graph_tweets(G):
 
 
 
-def network_of_tweets():
+def creation_of_network(G, network):
 
     # Walk through the directory
     for root, dirs, files in os.walk(current_directory):
-        #print('root: ', root)
-        #print('dirs: ',dirs) 
-
-        # if 'threads' not in root:
-        #     for file in files:
-        #         # Full file path
-        #         file_path = os.path.join(root, file)
-        #         print(file_path)
-
         if FOLDER in root:
             
             for file in files:
                 # Full file path
                 file_path = os.path.join(root, file)
                 # if "structure.json" in file_path:
-                #     print(file_path)
-                if file == "structure.json":
+                if network == "tweets" and file == "structure.json":
                     with open(file_path, 'r') as file:
                         data = json.load(file)
 
                     # Print the data
-                    print(data)
-                    create_connections(G, data)
+                    #print(data)
+                    tweet_connections(G, data)
+                
+                elif network == "following" and "who-follows" in file_path:
+                    with open(file_path, 'r') as file:
+                        for line in file:
+                            # Split each line by the tab character to get follower and followed
+                            follower, followed = line.strip().split('\t')
 
-                    # print("Number of Nodes:", len(list(G.nodes)))
-                    #print("Nodes:", list(G.nodes))
-                    # print("Number of Edges:", len(list(G.edges)))            
-                    #print("Edges:", list(G.edges))  
+                            #print(f"{follower} --> {followed}")
+                            
+                            # Add the follower relationship to the graph
+                            add_follower(G, follower, followed)   
+
                     
-
     print("Number of Nodes:", len(list(G.nodes)))
-    # print("Nodes:", list(G.nodes))
     print("Number of Edges:", len(list(G.edges)))            
-    # print("Edges:", list(G.edges)) 
+
+    
+    plot_graph(G, network)
 
 
-    plot_graph_tweets(G)
 
 
 
@@ -150,10 +196,8 @@ def network_of_tweets():
 ##### MAIN
 
 
-
-
-
-network_of_tweets()
+creation_of_network(T, "tweets")
+creation_of_network(F, "following")
 
 
 
