@@ -2,21 +2,25 @@ import os
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-# Create new empty global graph G (Un Directed Graph)
-G = nx.Graph()
+
 
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
+FOLDER = putin
+
+
+
+
 # Get the current working directory
 current_directory = os.getcwd()
 
-# Loop through the folders and subfolders
-# Example 
-# root:  \SNAProject\1. pheme-rumour-scheme-dataset\threads\en\charliehebdo\553461741917863936
-# dirs:  ['images', 'reactions', 'source-tweets', 'urls-content']
+# Create new empty global graph G (Un Directed Graph)
+G = nx.Graph()
+
 
 
 
@@ -33,7 +37,7 @@ def place_edge(G, first_node, second_node):
         G.add_edge(first_node, second_node, weight = 1)
 
 
-def place_tweets_in_graph(G, parent, tweet_id):
+def place_nodes_in_graph(G, parent, tweet_id):
     # Add nodes
     if parent not in G:
         G.add_node(parent, color = 'purple')
@@ -48,7 +52,7 @@ def create_connections(G, thread, parent = None):
     for tweet_id, replies in thread.items():
         if parent:
             print(f"Connection: {parent} -> {tweet_id}")
-            place_tweets_in_graph(G, parent, tweet_id)
+            place_nodes_in_graph(G, parent, tweet_id)
 
         else: # source tweet
             G.add_node(tweet_id, color = 'red')
@@ -60,79 +64,96 @@ def create_connections(G, thread, parent = None):
 
 
 
+
+def plot_graph_tweets(G):
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    pos = nx.spring_layout(G, k=0.155, seed=3968461)
+    node_color = [G.nodes[n]['color'] for n in G.nodes]
+
+    nx.draw_networkx(
+            G,
+            pos = pos,
+            with_labels = False,
+            node_color = node_color,
+            node_size = 20,
+            edge_color = "gainsboro",
+            alpha = 0.4,
+        )
+
+    # Create a legend using mpatches for the source and reply colors
+    source_patch = mpatches.Patch(color='red', label='Source Tweet')
+    reply_patch = mpatches.Patch(color='purple', label='Reply Tweet')
+    plt.legend(handles=[source_patch, reply_patch])
+
+    # Title/legend
+    font = {"color": "k", "fontweight": "bold", "fontsize": 10}
+    ax.set_title(f"Folder: {FOLDER}, network of tweets", font)
+    # Change font color for legend
+    font["color"] = "r"
+
+    # Resize figure for label readability
+    ax.margins(0.1, 0.05)
+    fig.tight_layout()
+    plt.axis("off")
+
+    plt.show()
+
+
+
+
+def network_of_tweets():
+
+    # Walk through the directory
+    for root, dirs, files in os.walk(current_directory):
+        #print('root: ', root)
+        #print('dirs: ',dirs) 
+
+        # if 'threads' not in root:
+        #     for file in files:
+        #         # Full file path
+        #         file_path = os.path.join(root, file)
+        #         print(file_path)
+
+        if FOLDER in root:
+            
+            for file in files:
+                # Full file path
+                file_path = os.path.join(root, file)
+                # if "structure.json" in file_path:
+                #     print(file_path)
+                if file == "structure.json":
+                    with open(file_path, 'r') as file:
+                        data = json.load(file)
+
+                    # Print the data
+                    print(data)
+                    create_connections(G, data)
+
+                    # print("Number of Nodes:", len(list(G.nodes)))
+                    #print("Nodes:", list(G.nodes))
+                    # print("Number of Edges:", len(list(G.edges)))            
+                    #print("Edges:", list(G.edges))  
+                    
+
+    print("Number of Nodes:", len(list(G.nodes)))
+    # print("Nodes:", list(G.nodes))
+    print("Number of Edges:", len(list(G.edges)))            
+    # print("Edges:", list(G.edges)) 
+
+
+    plot_graph_tweets(G)
+
+
+
+
 ##### MAIN
 
-# Walk through the directory
-for root, dirs, files in os.walk(current_directory):
-    #print('root: ', root)
-    #print('dirs: ',dirs) 
-
-    # if 'threads' not in root:
-    #     for file in files:
-    #         # Full file path
-    #         file_path = os.path.join(root, file)
-    #         print(file_path)
-
-    if charlie in root:
-        
-        for file in files:
-            # Full file path
-            file_path = os.path.join(root, file)
-            # if "structure.json" in file_path:
-            #     print(file_path)
-            if file == "structure.json":
-                with open(file_path, 'r') as file:
-                    data = json.load(file)
-
-                # Print the data
-                print(data)
-                create_connections(G, data)
-
-                # print("Number of Nodes:", len(list(G.nodes)))
-                #print("Nodes:", list(G.nodes))
-                # print("Number of Edges:", len(list(G.edges)))            
-                #print("Edges:", list(G.edges))  
-                
-                
 
 
-print("Number of Nodes:", len(list(G.nodes)))
-# print("Nodes:", list(G.nodes))
-print("Number of Edges:", len(list(G.edges)))            
-# print("Edges:", list(G.edges)) 
 
 
-pos = nx.spring_layout(G, k=0.155, seed=3968461)
-
-
-actor_color = '#BF0A8E'     # Color purple/pink
-
-fig, ax = plt.subplots(figsize=(12, 7))
-
-# node_color = [actor_color for n in G.nodes()] 
-node_color = [G.nodes[n]['color'] for n in G.nodes]
-
-nx.draw_networkx(
-        G,
-        pos = pos,
-        with_labels = False,
-        node_color = node_color,
-        node_size = 20,
-        edge_color = "gainsboro",
-        alpha = 0.4,
-    )
-
-    # # Title/legend
-    # font = {"color": "k", "fontweight": "bold", "fontsize": 10}
-    # # Change font color for legend
-    # font["color"] = "r"
-
-# Resize figure for label readability
-ax.margins(0.1, 0.05)
-fig.tight_layout()
-plt.axis("off")
-
-plt.show()
+network_of_tweets()
 
 
 
