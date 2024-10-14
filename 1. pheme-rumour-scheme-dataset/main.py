@@ -27,19 +27,6 @@ T = nx.Graph()
 F = nx.DiGraph()
 
 
-# TODO: IS weight necessary, otherwise remove this function, function is only necessary for weight tracker
-def place_edge(G, first_node, second_node):
-    """ Places an edges between two nodes in graph G. Initialzie the weight attribute with start weight 1
-    or increases the weight of the edge attribute if the edge already exists.
-    @param G: The NetworkX graph.
-    @param first_node: Node 1 of the two nodes, where an edge should be placed.
-    @param second_node: Node 2 of the two nodes, where an edge should be placed.
-    """ 
-    if G.has_edge(first_node, second_node):                                                 # First collaboration.
-        G[first_node][second_node]['weight'] += 1
-    else:
-        G.add_edge(first_node, second_node, weight = 1)
-
 
 def add_tweet(G, parent, tweet_id):
     # Add nodes
@@ -48,7 +35,7 @@ def add_tweet(G, parent, tweet_id):
     G.add_node(tweet_id, color = 'purple')
 
     # Place edge
-    place_edge(G, parent, tweet_id)
+    G.add_edge(parent, tweet_id)
     
 
 
@@ -73,7 +60,8 @@ def add_follower(G, follower, followed):
     G.add_node(followed, color = 'purple')
 
     # Place edge
-    place_edge(G, follower, followed)
+    G.add_edge(follower, followed)
+
 
 
 
