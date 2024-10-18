@@ -126,7 +126,6 @@ timezone_map = {
         "Cairo": "Africa/Cairo",
         "Canberra": "Australia/Canberra",
         "Dublin": "Europe/Dublin",
-        "Mid-Atlantic": "Atlantic/Midway",
         "International Date Line West": "Pacific/Midway",
         "Europe/London": "Europe/London",
         "Asia/Kolkata": "Asia/Kolkata",
@@ -134,6 +133,7 @@ timezone_map = {
         "Africa/Nairobi": "Africa/Nairobi",
         "Bucharest": "Europe/Bucharest",
         "Adelaide": "Australia/Adelaide",
+        "Mid-Atlantic": "America/New_York",
         "America/New_York": "America/New_York",
         "Australia/Adelaide": "Australia/Adelaide"   
     }

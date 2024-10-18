@@ -12,7 +12,7 @@ german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
 # Pick a folder
-FOLDER = putin
+FOLDER = german_airplane
 
 
 
@@ -95,14 +95,12 @@ def plot_graph(G, network):
     fig, ax = plt.subplots(figsize=(12, 7))
 
     pos = nx.spring_layout(G, k=0.155, seed=3968461)
-    # position_to_csv(pos, FOLDER + "_" + network)
+    position_to_csv(pos, FOLDER + "_" + network)
     # pos = {} 
-    # pos = csv_dict_position(pos, FOLDER + "_" + network)
+    # csv_dict_position(pos, FOLDER + "_" + network)
 
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
-
-    print("check")
 
     nx.draw_networkx(
             G,
@@ -135,7 +133,7 @@ def plot_graph(G, network):
     fig.tight_layout()
     plt.axis("off")
 
-    plt.show()
+    # plt.show()
 
 
 
@@ -149,7 +147,6 @@ def creation_of_network(G, network):
             for file in files:
                 # Full file path
                 file_path = os.path.join(root, file)
-                # if "structure.json" in file_path:
                 if network == "tweets" and file == "structure.json":
                     with open(file_path, 'r') as file:
                         data = json.load(file)
@@ -167,14 +164,20 @@ def creation_of_network(G, network):
                             #print(f"{follower} --> {followed}")
                             
                             # Add the follower relationship to the graph
-                            add_follower(G, follower, followed)   
+                            add_follower(G, follower, followed)
+
+
+                        
+
+
 
                     
     print("Number of Nodes:", len(list(G.nodes)))
-    print("Number of Edges:", len(list(G.edges)))            
+    #print("Number of Edges:", len(list(G.edges)))            
 
     
     plot_graph(G, network)
+    plt.show()
 
 
 
@@ -185,7 +188,7 @@ def creation_of_network(G, network):
 
 
 creation_of_network(T, "tweets")
-creation_of_network(F, "following")
+#creation_of_network(F, "following")
 
 
 
