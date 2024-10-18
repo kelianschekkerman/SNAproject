@@ -8,13 +8,19 @@ import matplotlib.patches as mpatches
 from datetime import datetime
 from get_timezones import timezone_map  # Timezone map to match strings to pytz timezones
 
+# Data structure to store a tweet
 class Tweet:
-    def __init__(self, node_id, node_type, truth, timestamp, reply_to=None):
-        self.id = node_id           # Tweet ID
-        self.type = node_type       # Indicates source tweet or reply
-        self.truth = truth          # Indicates truth annotation about the tweet: misinformation, true or uncertain
+    def __init__(self, tweet_id, type, timestamp, misinformation=None, true=None, reply_to=None):
+        self.tweet_id = tweet_id    # Tweet ID
+        self.type = type            # Indicates source tweet or reply
         self.timestamp = timestamp  # Timestamp (converted to Amsterdam time) of when the tweet was created
+        self.misinformation = misinformation    # Indicates if the tweet is later proven to be misinformation
+        self.true = True            # Indicates if a tweet is later proven to be true
         self.reply_to = reply_to    # ID of the parent tweet
+
+    # Representation of tweet when printing
+    def __str__(self):
+        return f'Tweet with ID {self.tweet_id}: type={self.type}, timestamp={self.timestamp}, misinformation={self.misinformation}, true={self.true} reply_to={self.reply_to}'
 
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
@@ -240,10 +246,10 @@ for root, dirs, files in os.walk(current_directory):
                     data = json.load(file)
                     
                     is_misinfo = data['misinformation']
-                    print(f"misformation: {is_misinfo}")
+                    # print(f"misformation: {is_misinfo}")
                     if 'true' in data:
                         is_true = data['true']
-                        print(f"true: {is_true}")
+                        # print(f"true: {is_true}")
 
         # Second through the reaction folder
         if "reaction" in root:
@@ -258,12 +264,14 @@ for root, dirs, files in os.walk(current_directory):
                     created_at = data["created_at"]
                     user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
                     time_zone = user_data.get('time_zone', 'NaN')
-                    print(f"{id} : {created_at}, {time_zone}") 
+                    # print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
                     timestamp_ams = convert_to_amsterdam(created_at, time_zone)
-                    print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
+                    # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
 
+                    # Add tweet to the list of tweets
+                    # tweets.append(Tweet(tweet_id=id, type="reply", timestamp=timestamp_ams, reply_to=parent))
                     add_reaction_tweet(T, parent, id, timestamp_ams)
 
 
@@ -278,38 +286,49 @@ for root, dirs, files in os.walk(current_directory):
                     created_at = data["created_at"]
                     user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
                     time_zone = user_data.get('time_zone', 'NaN')
-                    print(f"{id} : {created_at}, {time_zone}") 
+                    # print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
                     timestamp_ams = convert_to_amsterdam(created_at, time_zone)
-                    print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
 
-                    print(f"Misformation: {is_misinfo} and true: {is_true}\n") 
-                    
+                    # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
+                    # print(f"Misformation: {is_misinfo} and true: {is_true}\n")
+
+                    # Add tweet to the list of tweets
+                    # tweets.append(Tweet(tweet_id=id, type="source", timestamp=timestamp_ams, misinformation=is_misinfo, true=is_true))
                     add_source_tweet(T, id, timestamp_ams, is_misinfo, is_true)
-                    
+
                     # Reset the info for next thread folder
                     is_misinfo = None
                     is_true = None
 
+###########################################################################################################################
+# # Sort tweets on timestamp
+# tweets.sort(key=lambda tweet: tweet.timestamp)
+# # for tweet in tweets:
+# #     print(tweet)
 
-
-plot_graph(T, "tweets")
-
-
-# Based on the timestamps of the first and last tweet, determine the iteration duration
+# # Based on the timestamps of the first and last tweet, determine the iteration duration
 # max_iter = 5
 # iteration_duration = (last_timestamp - first_timestamp)/max_iter
 
-# iter = 0    # Start at iteration 0
+# current_iteration = 0    # Start at iteration 0
 # # Keep track of iterations
-# for i in range(iter):
-#     if timestamp_ams <= ((i * iteration_duration) + first_timestamp):
-#         # add node
-#     else:
-#         # plot
-#         i += 1
-#         # add node to the graph of the new iteration
+# for tweet in tweets:
+#     print(tweet)
+#     # If tweet is outside of the current iteration window, plot the current iteration and increase the iteration
+#     if timestamp_ams > ((current_iteration * iteration_duration) + first_timestamp):
+#         # plot_graph(T, "tweets")
+#         current_iteration += 1
+
+#     # Add the tweet to the graph
+#     if tweet.type == "source":
+#         add_source_tweet(G=T, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
+#     else:   # reply tweet
+#         add_reaction_tweet(G=T, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
+###########################################################################################################################
+
+plot_graph(T, "tweets")
 
 # t = iter (start 0)
 # LOOP 2: Per Folder van een source tweet
