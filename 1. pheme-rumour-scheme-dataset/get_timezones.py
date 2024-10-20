@@ -117,7 +117,7 @@ timezone_map = {
         "Vienna": "Europe/Vienna",
         "Volgograd": "Europe/Volgograd",
         "Wellington": "Pacific/Auckland",
-        "West Central Africa": "Africa/West_Central",
+        "West Central Africa": "Africa/Lagos",
         "Yakutsk": "Asia/Yakutsk",
         "Bangkok": "Asia/Bangkok",
         "Bogota": "America/Bogota",

@@ -6,7 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from datetime import datetime
-from get_timezones import timezone_map  # Timezone map to match strings to pytz timezones
+#from get_timezones import timezone_map  # Timezone map to match strings to pytz timezones
 
 # Data structure to store a tweet
 class Tweet:
@@ -40,25 +40,25 @@ T = nx.Graph()
     
 
 
-# Function to convert time to the desired timezone
-def convert_to_amsterdam(timestamp_str, original_tz_str):
-    # Parse the original time string into a datetime object
-    dt = datetime.strptime(timestamp_str, '%a %b %d %H:%M:%S +0000 %Y')
+# # Function to convert time to the desired timezone
+# def convert_to_amsterdam(timestamp_str, original_tz_str):
+#     # Parse the original time string into a datetime object
+#     dt = datetime.strptime(timestamp_str, '%a %b %d %H:%M:%S +0000 %Y')
 
-    # Determine the original timezone
-    if original_tz_str and original_tz_str in timezone_map:
-        original_tz = pytz.timezone(timezone_map[original_tz_str])
-    else:
-        # Default to UTC if timezone is None or not in the map
-        original_tz = pytz.utc
+#     # Determine the original timezone
+#     if original_tz_str and original_tz_str in timezone_map:
+#         original_tz = pytz.timezone(timezone_map[original_tz_str])
+#     else:
+#         # Default to UTC if timezone is None or not in the map
+#         original_tz = pytz.utc
     
-    # Localize the datetime object to the original timezone
-    localized_dt = original_tz.localize(dt)
+#     # Localize the datetime object to the original timezone
+#     localized_dt = original_tz.localize(dt)
     
-    # Convert the datetime to Amsterdam timezone
-    amsterdam_time = localized_dt.astimezone(amsterdam_tz)
+#     # Convert the datetime to Amsterdam timezone
+#     amsterdam_time = localized_dt.astimezone(amsterdam_tz)
     
-    return amsterdam_time
+#     return amsterdam_time
 
 
 def get_amsterdam_timestamp(folder):
@@ -80,20 +80,25 @@ def get_amsterdam_timestamp(folder):
                     print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
-                    amsterdam_time = convert_to_amsterdam(created_at, time_zone)
-                    print(f"ID: {id}, Amsterdam Time: {amsterdam_time}\n")
+                    #amsterdam_time = convert_to_amsterdam(created_at, time_zone)
+                    utc_time = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
+                    
+                    #print(f"ID: {id}, Amsterdam Time: {utc_time}\n")
+                    print(f"ID: {id}, UTC +0: {utc_time}\n")
 
-                    return amsterdam_time
+                    return utc_time
 
 
 
 def add_reaction_tweet(G, parent, tweet_id, t_stamp):
    
-    G.add_node(parent, color = 'black')
-    G.add_node(tweet_id, color = 'black', timestmap = t_stamp)
+    G.add_node(tweet_id, color = 'black', timestamp = t_stamp)
 
     # Place edge
     G.add_edge(parent, tweet_id)
+
+
+
 
 
 def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
@@ -103,10 +108,12 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
         c = "red"
     elif true:
         c = 'green'
+    elif misinfo and true:
+        c = 'blue'
     else:
         c = 'blue'    
     
-    G.add_node(source_tweet, color = c, timestmap = t_stamp)
+    G.add_node(source_tweet, color = c, timestamp = t_stamp)
 
         
 
@@ -153,13 +160,39 @@ def csv_dict_position(pos, graph_name):
             
 
 def plot_graph(G, network):
+    print("\n create plot")
     fig, ax = plt.subplots(figsize=(12, 7))
 
-    pos = nx.spring_layout(G, k=0.155, seed=3968461)
-    position_to_csv(pos, FOLDER + "_" + network)
+    nodes_tweet_network = {} 
+    csv_dict_position(nodes_tweet_network, FOLDER + "_" + network)
 
-    # pos = {} 
-    # csv_dict_position(pos, FOLDER + "_" + network)
+    nodes_to_remove = []
+    print(G.number_of_nodes())
+    print(len(nodes_tweet_network.keys())) 
+    for n in G.nodes():
+        if n not in nodes_tweet_network.keys():
+            #print(n)
+            nodes_to_remove.append(n)
+    print(f"count {len(nodes_to_remove)}")
+
+
+    # # print("MISSING:")
+    # # for n in nodes_tweet_network.keys():
+    # #     if n not in G.nodes():
+    # #         print(n)
+    # # print("\n")
+
+
+    G.remove_nodes_from(nodes_to_remove)   
+    
+    print(f" Nodes in the graph:  {G.number_of_nodes()} ")
+    print(len(nodes_tweet_network.keys())) 
+    
+    #pos = nx.spring_layout(G, k=0.155, seed=3968461)
+    # position_to_csv(pos, FOLDER + "_" + network)
+
+    pos = {} 
+    csv_dict_position(pos, FOLDER + "_" + network)
 
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
@@ -195,7 +228,7 @@ def plot_graph(G, network):
     fig.tight_layout()
     plt.axis("off")
 
-    plt.show()
+    #plt.show()
 
            
 
@@ -267,12 +300,15 @@ for root, dirs, files in os.walk(current_directory):
                     # print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
-                    timestamp_ams = convert_to_amsterdam(created_at, time_zone)
+                    #timestamp_ams = convert_to_amsterdam(created_at, time_zone)
+                    time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
+
                     # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
 
                     # Add tweet to the list of tweets
-                    # tweets.append(Tweet(tweet_id=id, type="reply", timestamp=timestamp_ams, reply_to=parent))
-                    add_reaction_tweet(T, parent, id, timestamp_ams)
+                    tweets.append(Tweet(tweet_id=id, type="reply", timestamp=time_stamp_utc0, reply_to=parent))
+                    add_reaction_tweet(T, parent, id, time_stamp_utc0)
+                   
 
 
         # Lastly through the source-tweet folder
@@ -289,46 +325,73 @@ for root, dirs, files in os.walk(current_directory):
                     # print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
-                    timestamp_ams = convert_to_amsterdam(created_at, time_zone)
+                    #timestamp_ams = convert_to_amsterdam(created_at, time_zone)
+                    time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
+                    
 
                     # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
                     # print(f"Misformation: {is_misinfo} and true: {is_true}\n")
 
                     # Add tweet to the list of tweets
-                    # tweets.append(Tweet(tweet_id=id, type="source", timestamp=timestamp_ams, misinformation=is_misinfo, true=is_true))
-                    add_source_tweet(T, id, timestamp_ams, is_misinfo, is_true)
+                    tweets.append(Tweet(tweet_id=id, type="source", timestamp=time_stamp_utc0, misinformation=is_misinfo, true=is_true))
+                    add_source_tweet(T, id, time_stamp_utc0, is_misinfo, is_true)
 
                     # Reset the info for next thread folder
                     is_misinfo = None
                     is_true = None
 
-###########################################################################################################################
-# # Sort tweets on timestamp
-# tweets.sort(key=lambda tweet: tweet.timestamp)
-# # for tweet in tweets:
-# #     print(tweet)
 
-# # Based on the timestamps of the first and last tweet, determine the iteration duration
-# max_iter = 5
-# iteration_duration = (last_timestamp - first_timestamp)/max_iter
 
-# current_iteration = 0    # Start at iteration 0
-# # Keep track of iterations
+
+
+
+print(f"len of tweets list {len(tweets)}")
+print(f"graph T list {T.number_of_nodes()}")
+
+
+
+# ###########################################################################################################################
+# Sort tweets on timestamp
+tweets.sort(key=lambda tweet: tweet.timestamp)
 # for tweet in tweets:
 #     print(tweet)
-#     # If tweet is outside of the current iteration window, plot the current iteration and increase the iteration
-#     if timestamp_ams > ((current_iteration * iteration_duration) + first_timestamp):
-#         # plot_graph(T, "tweets")
-#         current_iteration += 1
 
-#     # Add the tweet to the graph
-#     if tweet.type == "source":
-#         add_source_tweet(G=T, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
-#     else:   # reply tweet
-#         add_reaction_tweet(G=T, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
+# # Based on the timestamps of the first and last tweet, determine the iteration duration
+max_iter = 5
+iteration_duration = (last_timestamp - first_timestamp)/max_iter
+
+print(f"iter duur : {iteration_duration}")
+
+Tw = nx.Graph()
+
+
+current_iteration = 0    # Start at iteration 0
+# Keep track of iterations
+for tweet in tweets:
+    print(tweet)
+    # If tweet is outside of the current iteration window, plot the current iteration and increase the iteration
+    if tweet.timestamp >= ((current_iteration * iteration_duration) + first_timestamp):
+        plot_graph(Tw, "tweets")
+        current_iteration += 1
+
+    # Add the tweet to the graph
+    if tweet.type == "source":
+        add_source_tweet(G=Tw, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
+    else:   # reply tweet
+        add_reaction_tweet(G=Tw, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
+
+
+print(current_iteration)
+
+# #plot_graph(T, "tweets")
+plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
+
+
+plt.show()
+
+
 ###########################################################################################################################
 
-plot_graph(T, "tweets")
 
 # t = iter (start 0)
 # LOOP 2: Per Folder van een source tweet
