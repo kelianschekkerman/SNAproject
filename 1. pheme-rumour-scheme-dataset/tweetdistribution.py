@@ -6,6 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from datetime import datetime
+from collections import defaultdict
 #from get_timezones import timezone_map  # Timezone map to match strings to pytz timezones
 
 # Data structure to store a tweet
@@ -15,7 +16,7 @@ class Tweet:
         self.type = type            # Indicates source tweet or reply
         self.timestamp = timestamp  # Timestamp (converted to Amsterdam time) of when the tweet was created
         self.misinformation = misinformation    # Indicates if the tweet is later proven to be misinformation
-        self.true = True            # Indicates if a tweet is later proven to be true
+        self.true = true            # Indicates if a tweet is later proven to be true
         self.reply_to = reply_to    # ID of the parent tweet
 
     # Representation of tweet when printing
@@ -27,7 +28,7 @@ german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = charlie
 
 current_directory = os.getcwd()
 
@@ -84,13 +85,13 @@ def add_reaction_tweet(G, parent, tweet_id, t_stamp):
 def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
     c = "yellow"
 
-    if misinfo:
+    if misinfo and true:    # Uncertain
+        c = 'blue'
+    elif misinfo:
         c = "red"
     elif true:
         c = 'green'
-    elif misinfo and true:
-        c = 'blue'
-    else:
+    else:                   # Also Uncertain
         c = 'blue'    
     
     G.add_node(source_tweet, color = c, timestamp = t_stamp)
@@ -121,16 +122,64 @@ def csv_dict_position(pos, graph_name):
             pos.setdefault(row[0])
             pos[row[0]] = [float(row[1]), float(row[2])]    
 
-def add_tweet_to_network(G, tweet):
+
+
+# Function to find the source tweet's misinformation and true values for a reply tweet
+def find_source_info(tweet_id, tweets_dict):
+    # Start from the given tweet and traverse up the chain to find the source tweet
+    current_tweet = tweets_dict.get(tweet_id)
+
+    # Traverse until you find the source tweet
+    while current_tweet:
+        if current_tweet.type == 'source':
+            return current_tweet.misinformation, current_tweet.true  # Found source tweet, return its info
+        
+        # Move to the parent tweet (reply_to)
+        current_tweet = tweets_dict.get(current_tweet.reply_to)
+
+    # Return None if no source tweet was found (in case something went wrong)
+    return None, None
+
+
+def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter):    
+    #print(tweet.tweet_id)
+
+    # Find misinformation and true values for a specific reply tweet (e.g., tweet 3)
+    is_misinfo, is_true = find_source_info(tweet_id=tweet.tweet_id, tweets_dict=tweets_dict)
+
+    if is_misinfo and is_true:
+        # Uncertain 
+        uncertain_dict[current_iter].append(tweet.tweet_id,)
+    
+    elif is_misinfo:
+        misinfo_dict[current_iter].append(tweet.tweet_id,)
+        
+    elif is_true:
+        true_dict[current_iter].append(tweet.tweet_id,)
+    
+    else:
+    # Also uncertain
+        uncertain_dict[current_iter].append(tweet.tweet_id,)
+
+
+
+def add_tweet_to_network(G, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iter):
     # Add the tweet to the graph
     if tweet.type == "source":
-        add_source_tweet(G=Tw, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
+        print("source tweet")
+        add_source_tweet(G, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
     else:   # reply tweet
-        add_reaction_tweet(G=Tw, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
+        print("reaction")
+        add_reaction_tweet(G, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
+        add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter)
+
             
 
+
+
+
 def plot_graph(G, network):
-    # print("\n create plot")
+    print("create plot\n")
     fig, ax = plt.subplots(figsize=(12, 7))
 
     nodes_tweet_network = {} 
@@ -319,6 +368,11 @@ tweets.sort(key=lambda tweet: tweet.timestamp)
 # for tweet in tweets:
 #     print(tweet)
 
+
+# Dictionary for the barplots
+tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
+
+
 # # Based on the timestamps of the first and last tweet, determine the iteration duration
 max_iter = 5
 iteration_duration = (last_timestamp - first_timestamp)/max_iter
@@ -330,6 +384,11 @@ iteration_duration = (last_timestamp - first_timestamp)/max_iter
 # lower = first_timestamp
 # upper = first_timestamp + iteration_duration
 # print(f"FIRST ITERATION, BOUNDARY = [{lower}, {upper}]")
+
+
+misinfo_dict = defaultdict(list)
+true_dict = defaultdict(list)
+uncertain_dict = defaultdict(list)
 
 current_iteration = 1   # Start at iteration 1
 # Keep track of iterations
@@ -345,7 +404,7 @@ for tweet in tweets:
     if tweet.timestamp > ((current_iteration * iteration_duration) + first_timestamp):
         # Plot
         plot_graph(Tw, "tweets")
-        plt.show()
+        #plt.show()
         # lower = (current_iteration * iteration_duration) + first_timestamp
         current_iteration += 1
         # upper = (current_iteration * iteration_duration) + first_timestamp
@@ -355,22 +414,41 @@ for tweet in tweets:
     # If this tweet is on the upper boundary of the iteration, add the tweet to the iteration first, then plot
     if tweet.timestamp == ((current_iteration * iteration_duration) + first_timestamp):
         # Add tweet (== so still belongs to the current iteration)
-        add_tweet_to_network(Tw, tweet)
+        print(current_iteration)
+        add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
         # Then plot
         plot_graph(Tw, "tweets")
-        plt.show()
+        #plt.show()
         # lower = (current_iteration * iteration_duration) + first_timestamp
         current_iteration += 1
         # upper = (current_iteration * iteration_duration) + first_timestamp
         # print(f"NEW ITERATION CASE ==, NEW BOUNDARY = [{lower}, {upper}]")
     else :      # Tweet belongs in current iteration, add tweet then continue on to the next tweet
         # Add tweet to current iteration
-        add_tweet_to_network(Tw, tweet)
+        print(current_iteration)
+        add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
+
+
+# Dictionaries for barplots
+print(f"current iter : {current_iteration}\n")
+
+print(f"misinfo dict {misinfo_dict}")
+for k in misinfo_dict.keys():
+    print(f"iteration {k} : {len(misinfo_dict[k])}")
+
+print(f"\ntrue dict {true_dict}")
+for k in true_dict.keys():
+    print(f"iteration {k} : {len(true_dict[k])}")
+
+print(f"\nuncertain dict {uncertain_dict}")
+for k in uncertain_dict.keys():
+    print(f"iteration {k} : {len(uncertain_dict[k])}")
+
 
 # #plot_graph(T, "tweets")
 # plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
 
-# plt.show()
+#plt.show()
 
 
 ###########################################################################################################################
