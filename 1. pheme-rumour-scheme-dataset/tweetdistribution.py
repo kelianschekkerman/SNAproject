@@ -37,31 +37,11 @@ amsterdam_tz = pytz.timezone('Europe/Amsterdam')
 
 # Network of tweets
 T = nx.Graph()
-    
+Tw = nx.Graph()
 
 
-# # Function to convert time to the desired timezone
-# def convert_to_amsterdam(timestamp_str, original_tz_str):
-#     # Parse the original time string into a datetime object
-#     dt = datetime.strptime(timestamp_str, '%a %b %d %H:%M:%S +0000 %Y')
 
-#     # Determine the original timezone
-#     if original_tz_str and original_tz_str in timezone_map:
-#         original_tz = pytz.timezone(timezone_map[original_tz_str])
-#     else:
-#         # Default to UTC if timezone is None or not in the map
-#         original_tz = pytz.utc
-    
-#     # Localize the datetime object to the original timezone
-#     localized_dt = original_tz.localize(dt)
-    
-#     # Convert the datetime to Amsterdam timezone
-#     amsterdam_time = localized_dt.astimezone(amsterdam_tz)
-    
-#     return amsterdam_time
-
-
-def get_amsterdam_timestamp(folder):
+def get_timestamp(folder):
     """
     Function to process files inside a given folder.
     """
@@ -77,14 +57,14 @@ def get_amsterdam_timestamp(folder):
                     created_at = data["created_at"]
                     user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
                     time_zone = user_data.get('time_zone', 'NaN')
-                    print(f"{id} : {created_at}, {time_zone}") 
+                    # print(f"{id} : {created_at}, {time_zone}") 
 
                     ## Converting
                     #amsterdam_time = convert_to_amsterdam(created_at, time_zone)
                     utc_time = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
                     
                     #print(f"ID: {id}, Amsterdam Time: {utc_time}\n")
-                    print(f"ID: {id}, UTC +0: {utc_time}\n")
+                    # print(f"ID: {id}, UTC +0: {utc_time}\n")
 
                     return utc_time
 
@@ -118,22 +98,6 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
         
 
 
-
-# # Function to recursively traverse the tweet thread and generate connections
-# def tweet_connections(G, thread, parent = None):
-#     for tweet_id, replies in thread.items():
-#         if parent:
-#             print(f"Connection: {parent} -> {tweet_id}")
-#             add_tweet(G, parent, tweet_id)
-#         else:                                                                               # Source tweet
-#             G.add_node(tweet_id, color = 'red')
-
-            
-#         # If there are nested replies, recursively process them
-#         if isinstance(replies, dict) and replies:
-#             tweet_connections(G, replies, tweet_id)
-
-
 # Export
 def position_to_csv(pos, graph_name):
     """ Exports dictionary of positions of node, created by NetworkX spring_layout.
@@ -157,23 +121,29 @@ def csv_dict_position(pos, graph_name):
             pos.setdefault(row[0])
             pos[row[0]] = [float(row[1]), float(row[2])]    
 
+def add_tweet_to_network(G, tweet):
+    # Add the tweet to the graph
+    if tweet.type == "source":
+        add_source_tweet(G=Tw, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
+    else:   # reply tweet
+        add_reaction_tweet(G=Tw, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
             
 
 def plot_graph(G, network):
-    print("\n create plot")
+    # print("\n create plot")
     fig, ax = plt.subplots(figsize=(12, 7))
 
     nodes_tweet_network = {} 
     csv_dict_position(nodes_tweet_network, FOLDER + "_" + network)
 
     nodes_to_remove = []
-    print(G.number_of_nodes())
-    print(len(nodes_tweet_network.keys())) 
+    # print(G.number_of_nodes())
+    # print(len(nodes_tweet_network.keys())) 
     for n in G.nodes():
         if n not in nodes_tweet_network.keys():
             #print(n)
             nodes_to_remove.append(n)
-    print(f"count {len(nodes_to_remove)}")
+    # print(f"count {len(nodes_to_remove)}")
 
 
     # # print("MISSING:")
@@ -185,8 +155,8 @@ def plot_graph(G, network):
 
     G.remove_nodes_from(nodes_to_remove)   
     
-    print(f" Nodes in the graph:  {G.number_of_nodes()} ")
-    print(len(nodes_tweet_network.keys())) 
+    # print(f" Nodes in the graph:  {G.number_of_nodes()} ")
+    # print(len(nodes_tweet_network.keys())) 
     
     #pos = nx.spring_layout(G, k=0.155, seed=3968461)
     # position_to_csv(pos, FOLDER + "_" + network)
@@ -230,35 +200,27 @@ def plot_graph(G, network):
 
     #plt.show()
 
-           
-
-
-
-
 
 ##### MAIN
 
 
 # First loop for getting first and last timestamp of event
 first_timestamp = None
-last_timestamp = None
-
 
 # Walk through the directory
 for root, dirs, files in os.walk(current_directory):
     
     if FOLDER in root:
         first_folder = os.path.join(root, dirs[0])  # First folder
-        last_folder = os.path.join(root, dirs[-1])  # Last folder
-        print(f"First Folder: {first_folder}")
-        print(f"Last Folder: {last_folder}")
+        last_folder = os.path.join(root, dirs[-1])  # Last folder TODO: remove this line?
+        # print(f"First Folder: {first_folder}")
+        # print(f"Last Folder: {last_folder}")
 
-        first_timestamp = get_amsterdam_timestamp(first_folder)
-        last_timestamp = get_amsterdam_timestamp(last_folder)
+        first_timestamp = get_timestamp(first_folder)
 
         break
 
-
+last_timestamp = first_timestamp
 
 # Second loop
 
@@ -308,6 +270,10 @@ for root, dirs, files in os.walk(current_directory):
                     # Add tweet to the list of tweets
                     tweets.append(Tweet(tweet_id=id, type="reply", timestamp=time_stamp_utc0, reply_to=parent))
                     add_reaction_tweet(T, parent, id, time_stamp_utc0)
+                    
+                    # Check if this tweet is later than the currently found last tweet
+                    if time_stamp_utc0 > last_timestamp:
+                        last_timestamp = time_stamp_utc0
                    
 
 
@@ -340,15 +306,12 @@ for root, dirs, files in os.walk(current_directory):
                     is_misinfo = None
                     is_true = None
 
+                    # Check if this tweet is later than the currently found last tweet
+                    if time_stamp_utc0 > last_timestamp:
+                        last_timestamp = time_stamp_utc0
 
-
-
-
-
-print(f"len of tweets list {len(tweets)}")
-print(f"graph T list {T.number_of_nodes()}")
-
-
+# print(f"len of tweets list {len(tweets)}")
+# print(f"graph T list {T.number_of_nodes()}")
 
 # ###########################################################################################################################
 # Sort tweets on timestamp
@@ -360,34 +323,54 @@ tweets.sort(key=lambda tweet: tweet.timestamp)
 max_iter = 5
 iteration_duration = (last_timestamp - first_timestamp)/max_iter
 
-print(f"iter duur : {iteration_duration}")
+# print(f"FIRST TIMESTAMP = {first_timestamp}")
+# print(f"ITERATION DURATION = {iteration_duration}")
+# print(f"LAST TIMESTAMP = {last_timestamp}")
 
-Tw = nx.Graph()
+# lower = first_timestamp
+# upper = first_timestamp + iteration_duration
+# print(f"FIRST ITERATION, BOUNDARY = [{lower}, {upper}]")
 
-
-current_iteration = 0    # Start at iteration 0
+current_iteration = 1   # Start at iteration 1
 # Keep track of iterations
 for tweet in tweets:
-    print(tweet)
-    # If tweet is outside of the current iteration window, plot the current iteration and increase the iteration
-    if tweet.timestamp >= ((current_iteration * iteration_duration) + first_timestamp):
+    # print(tweet)
+    # print((current_iteration * iteration_duration) + first_timestamp)
+    # if tweet.timestamp == last_timestamp:
+    #     print(f"\n THIS IS THE LAST TWEET = {last_timestamp}")
+    #     print(tweet.timestamp)
+    #     print((current_iteration * iteration_duration) + first_timestamp)
+
+    # First check if the tweet is outside of the current iteration window, plot the graph and increase iteration
+    if tweet.timestamp > ((current_iteration * iteration_duration) + first_timestamp):
+        # Plot
         plot_graph(Tw, "tweets")
+        plt.show()
+        # lower = (current_iteration * iteration_duration) + first_timestamp
         current_iteration += 1
-
-    # Add the tweet to the graph
-    if tweet.type == "source":
-        add_source_tweet(G=Tw, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
-    else:   # reply tweet
-        add_reaction_tweet(G=Tw, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
-
-
-print(current_iteration)
+        # upper = (current_iteration * iteration_duration) + first_timestamp
+        # print(f"NEW ITERATION CASE >, NEW BOUNDARY = [{lower}, {upper}]")
+    
+    # Then decide what to do with the tweet
+    # If this tweet is on the upper boundary of the iteration, add the tweet to the iteration first, then plot
+    if tweet.timestamp == ((current_iteration * iteration_duration) + first_timestamp):
+        # Add tweet (== so still belongs to the current iteration)
+        add_tweet_to_network(Tw, tweet)
+        # Then plot
+        plot_graph(Tw, "tweets")
+        plt.show()
+        # lower = (current_iteration * iteration_duration) + first_timestamp
+        current_iteration += 1
+        # upper = (current_iteration * iteration_duration) + first_timestamp
+        # print(f"NEW ITERATION CASE ==, NEW BOUNDARY = [{lower}, {upper}]")
+    else :      # Tweet belongs in current iteration, add tweet then continue on to the next tweet
+        # Add tweet to current iteration
+        add_tweet_to_network(Tw, tweet)
 
 # #plot_graph(T, "tweets")
-plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
+# plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
 
-
-plt.show()
+# plt.show()
 
 
 ###########################################################################################################################
