@@ -32,7 +32,7 @@ german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
 # Pick a folder
-FOLDER = charlie
+FOLDER = german_airplane
 
 current_directory = os.getcwd()
 
@@ -309,7 +309,6 @@ for root, dirs, files in os.walk(current_directory):
 
                     # Add tweet to the list of tweets
                     tweets.append(Tweet(tweet_id=id, type="reply", timestamp=time_stamp_utc0, reply_to=parent))
-                    #add_reaction_tweet(T, parent, id, time_stamp_utc0)
                     
                     # Check if this tweet is later than the currently found last tweet
                     if time_stamp_utc0 > last_timestamp:
@@ -328,7 +327,6 @@ for root, dirs, files in os.walk(current_directory):
 
                     # Add tweet to the list of tweets
                     tweets.append(Tweet(tweet_id=id, type="source", timestamp=time_stamp_utc0, misinformation=is_misinfo, true=is_true))
-                    #add_source_tweet(T, id, time_stamp_utc0, is_misinfo, is_true)
 
                     # Reset the info for next thread folder
                     is_misinfo = None
@@ -343,13 +341,9 @@ for root, dirs, files in os.walk(current_directory):
 # ###########################################################################################################################
 # Sort tweets on timestamp
 tweets.sort(key=lambda tweet: tweet.timestamp)
-# for tweet in tweets:
-#     print(tweet)
 
-
-# Dictionary for the barplots
+# Dictionary for tweets for the barplots
 tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
-
 
 # # Based on the timestamps of the first and last tweet, determine the iteration duration
 max_iter = 5
@@ -371,50 +365,24 @@ uncertain_dict = defaultdict(list)
 current_iteration = 1   # Start at iteration 1
 # Keep track of iterations
 for tweet in tweets:
-    # # print(tweet)
-    # if tweet.timestamp == last_timestamp:
-    #     print(f"\n THIS IS THE LAST TWEET = {last_timestamp} should equal {tweet.timestamp}")
-    #     print(f"upper boundary = {(current_iteration * iteration_duration) + first_timestamp}")
-
     # First check if the tweet is outside of the current iteration window, plot the graph and increase iteration
     if tweet.timestamp > ((current_iteration * iteration_duration) + first_timestamp):
-        # print(f"{tweet.timestamp} is greater than {((current_iteration * iteration_duration) + first_timestamp)}")
         # Check if the tweet fits in the next iteration, otherwise iterate even further
         for i in range(5):
-            # print(f"i = {i}")
-            # print(f"is {tweet.timestamp} is greater than {(((current_iteration + i) * iteration_duration) + first_timestamp)}???????")
             if tweet.timestamp >= (((current_iteration + i) * iteration_duration) + first_timestamp):
                 # Plot current iteration and increase iteration counter
-                # print("yes it is")
                 plot_graph(Tw, "tweets")
-                # lower = (current_iteration * iteration_duration) + first_timestamp
                 current_iteration += 1
-                # upper = (current_iteration * iteration_duration) + first_timestamp
-                # print(f"NEW ITERATION CASE >, NEW BOUNDARY = <{lower}, {upper}], {tweet}")
-        # # Plot
-        # plot_graph(Tw, "tweets")
-        # #plt.show()
-        # lower = (current_iteration * iteration_duration) + first_timestamp
-        # current_iteration += 1
-        # upper = (current_iteration * iteration_duration) + first_timestamp
-        # print(f"NEW ITERATION CASE >, NEW BOUNDARY = [{lower}, {upper}], {tweet}")
-    
     # Then decide what to do with the tweet
     # If this tweet is on the upper boundary of the iteration, add the tweet to the iteration first, then plot
     if tweet.timestamp == ((current_iteration * iteration_duration) + first_timestamp):
         # Add tweet (== so still belongs to the current iteration)
-        # print(current_iteration)
         add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
-        # Then plot
+        # Then plot current iteration and increase iteration counter
         plot_graph(Tw, "tweets")
-        #plt.show()
-        # lower = (current_iteration * iteration_duration) + first_timestamp
         current_iteration += 1
-        # upper = (current_iteration * iteration_duration) + first_timestamp
-        # print(f"NEW ITERATION CASE ==, NEW BOUNDARY = [{lower}, {upper}], {tweet}")
     else :      # Tweet belongs in current iteration, add tweet then continue on to the next tweet
         # Add tweet to current iteration
-        # print(current_iteration)
         add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
 
 
@@ -424,10 +392,6 @@ true_dict = {key: len(value) for key, value in true_dict.items()}
 uncertain_dict = {key: len(value) for key, value in uncertain_dict.items()}
 plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter)
 
-# #plot_graph(T, "tweets")
-# plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
-
-#plt.show()
 
 
 ###########################################################################################################################
