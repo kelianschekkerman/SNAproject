@@ -2,6 +2,7 @@ import os
 import csv
 import pytz
 import json
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -28,7 +29,7 @@ german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
 # Pick a folder
-FOLDER = charlie
+FOLDER = german_airplane
 
 current_directory = os.getcwd()
 
@@ -250,6 +251,43 @@ def plot_graph(G, network):
     #plt.show()
 
 
+
+def plot_barplot(misinfo_dict, true_dict, uncertain_dict):
+    # Step 1: Get all unique iterations (keys) from all dictionaries
+    all_iterations = sorted(set(misinfo_dict.keys()).union(true_dict.keys()).union(uncertain_dict.keys()))
+
+    # Step 2: Prepare the values for each iteration, filling in zeros where necessary
+    misinfo_values = [misinfo_dict.get(i, 0) for i in all_iterations]
+    true_values = [true_dict.get(i, 0) for i in all_iterations]
+    uncertain_values = [uncertain_dict.get(i, 0) for i in all_iterations]
+
+    # Step 3: Plotting
+    bar_width = 0.25  # Width of each bar
+    indices = np.arange(len(all_iterations))  # The position on the x-axis for each group of bars
+
+    # Create a bar plot
+    fig, ax = plt.subplots()
+
+    # Plot the bars for each category, shifting their positions by bar_width
+    p1 = ax.bar(indices - bar_width, misinfo_values, bar_width, label='Misinformation', color='red')
+    p2 = ax.bar(indices, true_values, bar_width, label='True', color='green')
+    p3 = ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
+
+    # Step 4: Labeling
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Number of Replies')
+    ax.set_title('Number of Replies per Iteration')
+    ax.set_xticks(indices)
+    ax.set_xticklabels([f't={i}' for i in all_iterations])
+    ax.legend()
+
+    # Show plot
+    plt.tight_layout()
+    plt.show()
+
+
+
+
 ##### MAIN
 
 
@@ -433,17 +471,23 @@ for tweet in tweets:
 print(f"current iter : {current_iteration}\n")
 
 print(f"misinfo dict {misinfo_dict}")
-for k in misinfo_dict.keys():
-    print(f"iteration {k} : {len(misinfo_dict[k])}")
+misinfo_dict = {key: len(value) for key, value in misinfo_dict.items()}
+print(misinfo_dict)
+
+
 
 print(f"\ntrue dict {true_dict}")
-for k in true_dict.keys():
-    print(f"iteration {k} : {len(true_dict[k])}")
+true_dict = {key: len(value) for key, value in true_dict.items()}
+print(true_dict)
+
+
 
 print(f"\nuncertain dict {uncertain_dict}")
-for k in uncertain_dict.keys():
-    print(f"iteration {k} : {len(uncertain_dict[k])}")
+uncertain_dict = {key: len(value) for key, value in uncertain_dict.items()}
+print(uncertain_dict)
 
+
+plot_barplot(misinfo_dict, true_dict, uncertain_dict)
 
 # #plot_graph(T, "tweets")
 # plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
