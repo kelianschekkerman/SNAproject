@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from datetime import datetime
 from collections import defaultdict
-#from get_timezones import timezone_map  # Timezone map to match strings to pytz timezones
+
 
 # Data structure to store a tweet
 class Tweet:
@@ -24,12 +24,15 @@ class Tweet:
     def __str__(self):
         return f'Tweet with ID {self.tweet_id}: type={self.type}, timestamp={self.timestamp}, misinformation={self.misinformation}, true={self.true} reply_to={self.reply_to}'
 
+
+### GLobal variables
+
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = charlie
 
 current_directory = os.getcwd()
 
@@ -42,47 +45,32 @@ T = nx.Graph()
 Tw = nx.Graph()
 
 
-
+# Retrieve the timestamp given by a file in the folder
 def get_timestamp(folder):
     """
-    Function to process files inside a given folder.
+    Function to get the timestamp given by current folder
     """
     for root, dirs, files in os.walk(folder):
-        
         if "source-tweet" in root:
             for file in files:
                 file_path = os.path.join(root, file)
                 with open(file_path, 'r') as file:
                     data = json.load(file)
-                    id = data["id_str"]
-                    
                     created_at = data["created_at"]
-                    user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
-                    time_zone = user_data.get('time_zone', 'NaN')
-                    # print(f"{id} : {created_at}, {time_zone}") 
-
-                    ## Converting
-                    #amsterdam_time = convert_to_amsterdam(created_at, time_zone)
                     utc_time = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
-                    
-                    #print(f"ID: {id}, Amsterdam Time: {utc_time}\n")
-                    # print(f"ID: {id}, UTC +0: {utc_time}\n")
 
                     return utc_time
 
 
-
+# Add reaction to network G and place edge between reaction and its parent
 def add_reaction_tweet(G, parent, tweet_id, t_stamp):
-   
     G.add_node(tweet_id, color = 'black', timestamp = t_stamp)
 
     # Place edge
     G.add_edge(parent, tweet_id)
 
 
-
-
-
+# Add the right color to the tweet
 def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
     c = "yellow"
 
@@ -99,8 +87,7 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
 
         
 
-
-# Export
+# Export 
 def position_to_csv(pos, graph_name):
     """ Exports dictionary of positions of node, created by NetworkX spring_layout.
     @param pos: position disctionary.
@@ -138,13 +125,12 @@ def find_source_info(tweet_id, tweets_dict):
         # Move to the parent tweet (reply_to)
         current_tweet = tweets_dict.get(current_tweet.reply_to)
 
-    # Return None if no source tweet was found (in case something went wrong)
+    # No source tweet was found
     return None, None
 
 
+# Add the reply to the dictionary of the type of the source-tweet
 def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter):    
-    #print(tweet.tweet_id)
-
     # Find misinformation and true values for a specific reply tweet (e.g., tweet 3)
     is_misinfo, is_true = find_source_info(tweet_id=tweet.tweet_id, tweets_dict=tweets_dict)
 
@@ -159,64 +145,46 @@ def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_di
         true_dict[current_iter].append(tweet.tweet_id,)
     
     else:
-    # Also uncertain
+        # Also uncertain
         uncertain_dict[current_iter].append(tweet.tweet_id,)
 
 
-
+# Add the tweet to the network G
 def add_tweet_to_network(G, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iter):
     # Add the tweet to the graph
     if tweet.type == "source":
-        print("source tweet")
+        # print("source tweet")
         add_source_tweet(G, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
-    else:   # reply tweet
-        print("reaction")
+    else:   # Reply tweet
+        # print("reaction")
         add_reaction_tweet(G, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
         add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter)
 
             
-
-
-
-
+# Plot the graph of netwrok G
 def plot_graph(G, network):
     print("create plot\n")
     fig, ax = plt.subplots(figsize=(12, 7))
 
-    nodes_tweet_network = {} 
-    csv_dict_position(nodes_tweet_network, FOLDER + "_" + network)
-
-    nodes_to_remove = []
-    # print(G.number_of_nodes())
-    # print(len(nodes_tweet_network.keys())) 
-    for n in G.nodes():
-        if n not in nodes_tweet_network.keys():
-            #print(n)
-            nodes_to_remove.append(n)
-    # print(f"count {len(nodes_to_remove)}")
-
-
-    # # print("MISSING:")
-    # # for n in nodes_tweet_network.keys():
-    # #     if n not in G.nodes():
-    # #         print(n)
-    # # print("\n")
-
-
-    G.remove_nodes_from(nodes_to_remove)   
-    
-    # print(f" Nodes in the graph:  {G.number_of_nodes()} ")
-    # print(len(nodes_tweet_network.keys())) 
-    
-    #pos = nx.spring_layout(G, k=0.155, seed=3968461)
-    # position_to_csv(pos, FOLDER + "_" + network)
-
+    # Fetch the positions of the nodes in the csv of the network of the FOLDER
     pos = {} 
     csv_dict_position(pos, FOLDER + "_" + network)
 
+    # Keep track of the nodes that are extra in the current network than that of the csv file
+    nodes_to_remove = []
+    for n in G.nodes():
+        if n not in pos.keys():
+            nodes_to_remove.append(n)
+
+    # Remove those extra nodes from the current network
+    G.remove_nodes_from(nodes_to_remove)   
+    
+    # print(f" Nodes in the graph:  {G.number_of_nodes()} ")
+    # print(len(pos.keys())) 
+    
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
-
+    # Draw network
     nx.draw_networkx(
             G,
             pos = pos,
@@ -252,18 +220,18 @@ def plot_graph(G, network):
 
 
 
-def plot_barplot(misinfo_dict, true_dict, uncertain_dict):
-    # Step 1: Get all unique iterations (keys) from all dictionaries
-    all_iterations = sorted(set(misinfo_dict.keys()).union(true_dict.keys()).union(uncertain_dict.keys()))
+# The bar plot for the types misinformation, true and uncertain, showing for each iteration
+def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter):
+    # List of with all iterations
+    all_iterations = list(range(1, max_iter + 1))
 
-    # Step 2: Prepare the values for each iteration, filling in zeros where necessary
+    # Prepare the values for each iteration, filling in zeros where necessary
     misinfo_values = [misinfo_dict.get(i, 0) for i in all_iterations]
     true_values = [true_dict.get(i, 0) for i in all_iterations]
     uncertain_values = [uncertain_dict.get(i, 0) for i in all_iterations]
 
-    # Step 3: Plotting
     bar_width = 0.25  # Width of each bar
-    indices = np.arange(len(all_iterations))  # The position on the x-axis for each group of bars
+    indices = np.arange(max_iter)  # The position on the x-axis for each group of bars
 
     # Create a bar plot
     fig, ax = plt.subplots()
@@ -273,10 +241,10 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict):
     p2 = ax.bar(indices, true_values, bar_width, label='True', color='green')
     p3 = ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
 
-    # Step 4: Labeling
+    # Labeling
     ax.set_xlabel('Iteration')
     ax.set_ylabel('Number of Replies')
-    ax.set_title('Number of Replies per Iteration')
+    ax.set_title(f'Number of Replies per Iteration of {FOLDER}')
     ax.set_xticks(indices)
     ax.set_xticklabels([f't={i}' for i in all_iterations])
     ax.legend()
@@ -291,7 +259,7 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict):
 ##### MAIN
 
 
-# First loop for getting first and last timestamp of event
+### First loop: Getting the first timestamp of event
 first_timestamp = None
 
 # Walk through the directory
@@ -299,26 +267,22 @@ for root, dirs, files in os.walk(current_directory):
     
     if FOLDER in root:
         first_folder = os.path.join(root, dirs[0])  # First folder
-        last_folder = os.path.join(root, dirs[-1])  # Last folder TODO: remove this line?
-        # print(f"First Folder: {first_folder}")
-        # print(f"Last Folder: {last_folder}")
-
         first_timestamp = get_timestamp(first_folder)
 
         break
 
 last_timestamp = first_timestamp
 
-# Second loop
 
+### Second loop: Appending the source tweets and reaction to the list of all Tweets
 tweets = []
-
 is_misinfo = None
 is_true = None
+
 # Walk through the directory
 for root, dirs, files in os.walk(current_directory):
     if FOLDER in root:        
-        # Loop first goes through seperate files
+        # First loop goes through seperate files
         for file in files:
             # Full file path
             file_path = os.path.join(root, file)
@@ -326,12 +290,9 @@ for root, dirs, files in os.walk(current_directory):
             if "annotation.json" in file_path:
                 with open(file_path, 'r') as file:
                     data = json.load(file)
-                    
                     is_misinfo = data['misinformation']
-                    # print(f"misformation: {is_misinfo}")
                     if 'true' in data:
                         is_true = data['true']
-                        # print(f"true: {is_true}")
 
         # Second through the reaction folder
         if "reaction" in root:
@@ -340,30 +301,20 @@ for root, dirs, files in os.walk(current_directory):
                 with open(file_path, 'r') as file:
                     data = json.load(file)
                     id = data["id_str"] # Tweet ID
-
                     parent = str(data["in_reply_to_status_id"]) # Parent node
-                    
                     created_at = data["created_at"]
                     user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
                     time_zone = user_data.get('time_zone', 'NaN')
-                    # print(f"{id} : {created_at}, {time_zone}") 
-
-                    ## Converting
-                    #timestamp_ams = convert_to_amsterdam(created_at, time_zone)
                     time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
-
-                    # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
 
                     # Add tweet to the list of tweets
                     tweets.append(Tweet(tweet_id=id, type="reply", timestamp=time_stamp_utc0, reply_to=parent))
-                    add_reaction_tweet(T, parent, id, time_stamp_utc0)
+                    #add_reaction_tweet(T, parent, id, time_stamp_utc0)
                     
                     # Check if this tweet is later than the currently found last tweet
                     if time_stamp_utc0 > last_timestamp:
                         last_timestamp = time_stamp_utc0
                    
-
-
         # Lastly through the source-tweet folder
         if "source-tweet" in root:
             for file in files:
@@ -371,23 +322,13 @@ for root, dirs, files in os.walk(current_directory):
                 with open(file_path, 'r') as file:
                     data = json.load(file)
                     id = data["id_str"]
-                    
                     created_at = data["created_at"]
                     user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
-                    time_zone = user_data.get('time_zone', 'NaN')
-                    # print(f"{id} : {created_at}, {time_zone}") 
-
-                    ## Converting
-                    #timestamp_ams = convert_to_amsterdam(created_at, time_zone)
                     time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
-                    
-
-                    # print(f"ID: {id}, Amsterdam Time: {timestamp_ams}\n")
-                    # print(f"Misformation: {is_misinfo} and true: {is_true}\n")
 
                     # Add tweet to the list of tweets
                     tweets.append(Tweet(tweet_id=id, type="source", timestamp=time_stamp_utc0, misinformation=is_misinfo, true=is_true))
-                    add_source_tweet(T, id, time_stamp_utc0, is_misinfo, is_true)
+                    #add_source_tweet(T, id, time_stamp_utc0, is_misinfo, is_true)
 
                     # Reset the info for next thread folder
                     is_misinfo = None
@@ -397,8 +338,7 @@ for root, dirs, files in os.walk(current_directory):
                     if time_stamp_utc0 > last_timestamp:
                         last_timestamp = time_stamp_utc0
 
-# print(f"len of tweets list {len(tweets)}")
-# print(f"graph T list {T.number_of_nodes()}")
+
 
 # ###########################################################################################################################
 # Sort tweets on timestamp
@@ -415,13 +355,13 @@ tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
 max_iter = 5
 iteration_duration = (last_timestamp - first_timestamp)/max_iter
 
-# print(f"FIRST TIMESTAMP = {first_timestamp}")
-# print(f"ITERATION DURATION = {iteration_duration}")
-# print(f"LAST TIMESTAMP = {last_timestamp}")
+print(f"FIRST TIMESTAMP = {first_timestamp}")
+print(f"ITERATION DURATION = {iteration_duration}")
+print(f"LAST TIMESTAMP = {last_timestamp}")
 
-# lower = first_timestamp
-# upper = first_timestamp + iteration_duration
-# print(f"FIRST ITERATION, BOUNDARY = [{lower}, {upper}]")
+lower = first_timestamp
+upper = first_timestamp + iteration_duration
+print(f"FIRST ITERATION, BOUNDARY = [{lower}, {upper}]")
 
 
 misinfo_dict = defaultdict(list)
@@ -431,28 +371,39 @@ uncertain_dict = defaultdict(list)
 current_iteration = 1   # Start at iteration 1
 # Keep track of iterations
 for tweet in tweets:
-    # print(tweet)
-    # print((current_iteration * iteration_duration) + first_timestamp)
+    # # print(tweet)
     # if tweet.timestamp == last_timestamp:
-    #     print(f"\n THIS IS THE LAST TWEET = {last_timestamp}")
-    #     print(tweet.timestamp)
-    #     print((current_iteration * iteration_duration) + first_timestamp)
+    #     print(f"\n THIS IS THE LAST TWEET = {last_timestamp} should equal {tweet.timestamp}")
+    #     print(f"upper boundary = {(current_iteration * iteration_duration) + first_timestamp}")
 
     # First check if the tweet is outside of the current iteration window, plot the graph and increase iteration
     if tweet.timestamp > ((current_iteration * iteration_duration) + first_timestamp):
-        # Plot
-        plot_graph(Tw, "tweets")
-        #plt.show()
+        # print(f"{tweet.timestamp} is greater than {((current_iteration * iteration_duration) + first_timestamp)}")
+        # Check if the tweet fits in the next iteration, otherwise iterate even further
+        for i in range(5):
+            # print(f"i = {i}")
+            # print(f"is {tweet.timestamp} is greater than {(((current_iteration + i) * iteration_duration) + first_timestamp)}???????")
+            if tweet.timestamp >= (((current_iteration + i) * iteration_duration) + first_timestamp):
+                # Plot current iteration and increase iteration counter
+                # print("yes it is")
+                plot_graph(Tw, "tweets")
+                # lower = (current_iteration * iteration_duration) + first_timestamp
+                current_iteration += 1
+                # upper = (current_iteration * iteration_duration) + first_timestamp
+                # print(f"NEW ITERATION CASE >, NEW BOUNDARY = <{lower}, {upper}], {tweet}")
+        # # Plot
+        # plot_graph(Tw, "tweets")
+        # #plt.show()
         # lower = (current_iteration * iteration_duration) + first_timestamp
-        current_iteration += 1
+        # current_iteration += 1
         # upper = (current_iteration * iteration_duration) + first_timestamp
-        # print(f"NEW ITERATION CASE >, NEW BOUNDARY = [{lower}, {upper}]")
+        # print(f"NEW ITERATION CASE >, NEW BOUNDARY = [{lower}, {upper}], {tweet}")
     
     # Then decide what to do with the tweet
     # If this tweet is on the upper boundary of the iteration, add the tweet to the iteration first, then plot
     if tweet.timestamp == ((current_iteration * iteration_duration) + first_timestamp):
         # Add tweet (== so still belongs to the current iteration)
-        print(current_iteration)
+        # print(current_iteration)
         add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
         # Then plot
         plot_graph(Tw, "tweets")
@@ -460,34 +411,18 @@ for tweet in tweets:
         # lower = (current_iteration * iteration_duration) + first_timestamp
         current_iteration += 1
         # upper = (current_iteration * iteration_duration) + first_timestamp
-        # print(f"NEW ITERATION CASE ==, NEW BOUNDARY = [{lower}, {upper}]")
+        # print(f"NEW ITERATION CASE ==, NEW BOUNDARY = [{lower}, {upper}], {tweet}")
     else :      # Tweet belongs in current iteration, add tweet then continue on to the next tweet
         # Add tweet to current iteration
-        print(current_iteration)
+        # print(current_iteration)
         add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
 
 
 # Dictionaries for barplots
-print(f"current iter : {current_iteration}\n")
-
-print(f"misinfo dict {misinfo_dict}")
 misinfo_dict = {key: len(value) for key, value in misinfo_dict.items()}
-print(misinfo_dict)
-
-
-
-print(f"\ntrue dict {true_dict}")
 true_dict = {key: len(value) for key, value in true_dict.items()}
-print(true_dict)
-
-
-
-print(f"\nuncertain dict {uncertain_dict}")
 uncertain_dict = {key: len(value) for key, value in uncertain_dict.items()}
-print(uncertain_dict)
-
-
-plot_barplot(misinfo_dict, true_dict, uncertain_dict)
+plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter)
 
 # #plot_graph(T, "tweets")
 # plot_graph(Tw, "tweets")        ## !!!! Bij deze wordt alles geplot
