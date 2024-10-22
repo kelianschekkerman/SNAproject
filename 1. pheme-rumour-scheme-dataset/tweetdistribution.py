@@ -25,11 +25,12 @@ class Tweet:
         return f'Tweet with ID {self.tweet_id}: type={self.type}, timestamp={self.timestamp}, misinformation={self.misinformation}, true={self.true} reply_to={self.reply_to}'
 
 
-### GLobal variables
+### Global variables
 
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
+ottawa = 'ottawashooting'
 
 # Pick a folder
 FOLDER = german_airplane
@@ -88,6 +89,7 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
         
 
 # Export 
+# This function is from Bachelor Thesis of Joy Kwant
 def position_to_csv(pos, graph_name):
     """ Exports dictionary of positions of node, created by NetworkX spring_layout.
     @param pos: position disctionary.
@@ -99,6 +101,7 @@ def position_to_csv(pos, graph_name):
 
 
 # Import
+# This function is from Bachelor Thesis of Joy Kwant
 def csv_dict_position(pos, graph_name):
     """ Imports the position dictionary, for each node there is a x,y-coordinate.
     @param pos: empty position dictionary.
@@ -163,7 +166,6 @@ def add_tweet_to_network(G, tweet, misinfo_dict, true_dict, uncertain_dict, twee
             
 # Plot the graph of netwrok G
 def plot_graph(G, network):
-    print("create plot\n")
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # Fetch the positions of the nodes in the csv of the network of the FOLDER
@@ -349,15 +351,6 @@ tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
 max_iter = 5
 iteration_duration = (last_timestamp - first_timestamp)/max_iter
 
-print(f"FIRST TIMESTAMP = {first_timestamp}")
-print(f"ITERATION DURATION = {iteration_duration}")
-print(f"LAST TIMESTAMP = {last_timestamp}")
-
-lower = first_timestamp
-upper = first_timestamp + iteration_duration
-print(f"FIRST ITERATION, BOUNDARY = [{lower}, {upper}]")
-
-
 misinfo_dict = defaultdict(list)
 true_dict = defaultdict(list)
 uncertain_dict = defaultdict(list)
@@ -390,6 +383,8 @@ for tweet in tweets:
 misinfo_dict = {key: len(value) for key, value in misinfo_dict.items()}
 true_dict = {key: len(value) for key, value in true_dict.items()}
 uncertain_dict = {key: len(value) for key, value in uncertain_dict.items()}
+
+# Barplots
 plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter)
 
 

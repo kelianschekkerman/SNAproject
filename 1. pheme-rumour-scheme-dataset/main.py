@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import operator
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -10,9 +11,10 @@ import matplotlib.patches as mpatches
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
+ottawa = 'ottawashooting'
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = putin
 
 
 
@@ -67,6 +69,7 @@ def add_follower(G, follower, followed):
 
 
 # Export
+# This function is from Bachelor Thesis of Joy Kwant
 def position_to_csv(pos, graph_name):
     """ Exports dictionary of positions of node, created by NetworkX spring_layout.
     @param pos: position disctionary.
@@ -77,6 +80,7 @@ def position_to_csv(pos, graph_name):
             f.write("%s,%s,%s\n"%(key, pos[key][0], pos[key][1]))
 
 # Import
+# This function is from Bachelor Thesis of Joy Kwant
 def csv_dict_position(pos, graph_name):
     """ Imports the position dictionary, for each node there is a x,y-coordinate.
     @param pos: empty position dictionary.
@@ -165,30 +169,59 @@ def creation_of_network(G, network):
                             
                             # Add the follower relationship to the graph
                             add_follower(G, follower, followed)
-
-
-                        
-
-
-
                     
     print("Number of Nodes:", len(list(G.nodes)))
     #print("Number of Edges:", len(list(G.edges)))            
 
+
+    # plot_graph(G, network)
+    # plt.show()
+
+
+
+
+# LINK ANALYSIS
+
+# This function is from Bachelor Thesis of Joy Kwant
+def hits(G, graph_name):
+    """ Perform the HITS algorithm on graph G, but first converts undirected graph to directed graph,
+    and stores the outcome of the Hubs and Authorities in descending order in csv files.
+    @param G: The NetworkX graph.
+    @param graph_name: The name of the graph G (AA, DA, ..). 
+    """ 
+    print("in hits")
+    if not G.is_directed():
+        H = G.to_directed()                                                                     # Converts undirected graph to a directed graph.
+    else:
+        H = G.copy()
+
+    h, a = nx.hits(H)                                                                           # Returns two dictionaries of Hubs and Authorities.
+
+    print("sorted")
+    h = sorted(h.items(), key = operator.itemgetter(1), reverse = True)
+    a = sorted(a.items(), key = operator.itemgetter(1), reverse = True)
+
+
+    with open('hits_hubs_' + graph_name + '.csv', 'w') as f:
+        f.write('\n'.join(f'{tup[0]},{tup[1]}' for tup in h))
+
+    with open('hits_authorities_' + graph_name + '.csv', 'w') as f:
+        f.write('\n'.join(f'{tup[0]},{tup[1]}' for tup in a))
+
+    # Find the intersection between the user IDs with the top 10 hub and authority scores
+    match = set(h_id[0] for h_id in h[:10]) & set(a_id[0] for a_id in a[:10])
+    print(f"we found {len(match)} matches between top 10s: {match}")
     
-    plot_graph(G, network)
-    plt.show()
-
-
-
-
 
 
 ##### MAIN
 
 
-creation_of_network(T, "tweets")
-#creation_of_network(F, "following")
+# creation_of_network(T, "tweets")
+creation_of_network(F, "following")
+
+# hits(T, FOLDER + "_" + "tweets")
+hits(F, FOLDER + "_" + "following")
 
 
 
