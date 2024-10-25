@@ -95,7 +95,7 @@ def position_to_csv(pos, graph_name):
     @param pos: position disctionary.
     @param graph_name: name of graph (tweet or following) with folder name.
     """
-    with open('pos_dic_'+ graph_name + '.csv', 'w') as f:
+    with open('csv\pos_dic_'+ graph_name + '.csv', 'w') as f:
         for key in pos.keys():
             f.write("%s,%s,%s\n"%(key, pos[key][0], pos[key][1]))
 
@@ -107,7 +107,7 @@ def csv_dict_position(pos, graph_name):
     @param pos: empty position dictionary.
     @param graph_name: name of graph (tweet or following) with folder name.
     """
-    with open('pos_dic_'+ graph_name + '.csv', newline='') as csvfile:
+    with open('csv\pos_dic_'+ graph_name + '.csv', newline='') as csvfile:
         data = csv.reader(csvfile)
         for row in data:
             pos.setdefault(row[0])
