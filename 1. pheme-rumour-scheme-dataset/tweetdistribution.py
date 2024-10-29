@@ -165,7 +165,7 @@ def add_tweet_to_network(G, tweet, misinfo_dict, true_dict, uncertain_dict, twee
 
             
 # Plot the graph of netwrok G
-def plot_graph(G, network):
+def plot_graph(G, network, current_iteration, lower, upper):
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # Fetch the positions of the nodes in the csv of the network of the FOLDER
@@ -209,7 +209,7 @@ def plot_graph(G, network):
 
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
-    ax.set_title(f"Folder: {FOLDER}, network of {network}", font)
+    ax.set_title(f"Folder: {FOLDER}, network of {network}, iteration = {current_iteration}, times between {lower.strftime("%Y-%m-%d %H:%M")} and {upper.strftime("%Y-%m-%d %H:%M")}", font)
     # Change font color for legend
     font["color"] = "r"
 
@@ -223,7 +223,7 @@ def plot_graph(G, network):
 
 
 # The bar plot for the types misinformation, true and uncertain, showing for each iteration
-def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter):
+def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timestamp, last_timestamp, iteration_duration):
     # List of with all iterations
     all_iterations = list(range(1, max_iter + 1))
 
@@ -243,12 +243,34 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter):
     p2 = ax.bar(indices, true_values, bar_width, label='True', color='green')
     p3 = ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
 
+    # Format iteration_duration as hours, minutes, and seconds
+    iteration_duration_str = f"{iteration_duration.seconds // 3600}h {iteration_duration.seconds % 3600 // 60}m {iteration_duration.seconds % 60}s"
+
+
     # Labeling
-    ax.set_xlabel('Iteration')
+    # ax.set_xlabel('Iteration')
+    # ax.set_ylabel('Number of Replies')
+    # ax.set_title(f'Number of Replies per Iteration of {FOLDER}')
+    # ax.set_xticks(indices)
+    # ax.set_xticklabels([f't={i}' for i in all_iterations])
+    # ax.legend()
+
+    # Labeling
+    ax.set_xlabel(f'Iteration (Duration is {iteration_duration_str})')
     ax.set_ylabel('Number of Replies')
     ax.set_title(f'Number of Replies per Iteration of {FOLDER}')
     ax.set_xticks(indices)
     ax.set_xticklabels([f't={i}' for i in all_iterations])
+
+    # Add the first and last timestamps
+    ax.annotate(f'Start: {first_timestamp.strftime("%Y-%m-%d %H:%M:%S")}',
+            xy=(0, -0.15), xycoords=('data', 'axes fraction'),
+            ha='center', va='top', fontsize=10, color='blue')
+
+    ax.annotate(f'End: {last_timestamp.strftime("%Y-%m-%d %H:%M:%S")}',
+            xy=(max_iter - 1, -0.15), xycoords=('data', 'axes fraction'),
+            ha='center', va='top', fontsize=10, color='blue')
+
     ax.legend()
 
     # Show plot
@@ -341,6 +363,9 @@ for root, dirs, files in os.walk(current_directory):
 
 
 # ###########################################################################################################################
+
+
+
 # Sort tweets on timestamp
 tweets.sort(key=lambda tweet: tweet.timestamp)
 
@@ -364,7 +389,9 @@ for tweet in tweets:
         for i in range(5):
             if tweet.timestamp >= (((current_iteration + i) * iteration_duration) + first_timestamp):
                 # Plot current iteration and increase iteration counter
-                plot_graph(Tw, "tweets")
+                upper = (current_iteration * iteration_duration) + first_timestamp
+                lower = ((current_iteration - 1) * iteration_duration) + first_timestamp
+                plot_graph(Tw, "tweets", current_iteration, lower, upper)
                 current_iteration += 1
     # Then decide what to do with the tweet
     # If this tweet is on the upper boundary of the iteration, add the tweet to the iteration first, then plot
@@ -372,7 +399,10 @@ for tweet in tweets:
         # Add tweet (== so still belongs to the current iteration)
         add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
         # Then plot current iteration and increase iteration counter
-        plot_graph(Tw, "tweets")
+        upper = (current_iteration * iteration_duration) + first_timestamp
+        print(upper)
+        lower = ((current_iteration - 1) * iteration_duration) + first_timestamp
+        plot_graph(Tw, "tweets", current_iteration, lower, upper)
         current_iteration += 1
     else :      # Tweet belongs in current iteration, add tweet then continue on to the next tweet
         # Add tweet to current iteration
@@ -385,7 +415,7 @@ true_dict = {key: len(value) for key, value in true_dict.items()}
 uncertain_dict = {key: len(value) for key, value in uncertain_dict.items()}
 
 # Barplots
-plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter)
+plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timestamp, last_timestamp, iteration_duration)
 
 
 
