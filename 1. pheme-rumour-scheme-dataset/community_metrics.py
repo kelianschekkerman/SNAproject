@@ -1,5 +1,4 @@
 import csv
-import operator
 import numpy as np
 import networkx as nx
 from networkx.algorithms.community.centrality import girvan_newman
@@ -19,7 +18,7 @@ def remove_noise(G):
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def girvan_list_csv(G, folder_name):
-    """ Preforms the Grivan Newman algorithm from NetworkX. After each iteration, the outcome
+    """ Performs the Girvan Newman algorithm from NetworkX. After each iteration, the outcome
     will be imported to a csv file.
     @param G: The NetworkX graph.
     """ 
@@ -48,20 +47,8 @@ def louvain(G, folder_name):
     with open(r"csv\louvain_" + folder_name + ".csv", "w") as f:
         f.write('\n'.join(f'{community}' for community in louvain_list))
 
-
-
-
 def community_metric_report(G, folder_name):
     girvan_list_csv(G, folder_name)
-
-    # # Find all cliques
-    cliques = list(nx.find_cliques(G)) 
-    print("Cliques:", cliques)
-
-    # To find the largest cliques
-    max_clique = max(cliques, key=len)
-    print("Largest clique:", max_clique)
-
 
     # Homophily analysis
     # Count edges where nodes share the same group
@@ -69,8 +56,6 @@ def community_metric_report(G, folder_name):
     # total_edges = G.number_of_edges()
     # homophily_ratio = homophily_edges / total_edges if total_edges > 0 else 0
     # print("Homophily Ratio:", homophily_ratio)
-
-
 
     # Calculate betweenness centrality for nodes
     betweenness = nx.betweenness_centrality(G)
