@@ -3,6 +3,7 @@ import csv
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 from metrics import metric_report
@@ -13,7 +14,7 @@ putin = 'putinmissing'
 ottawa = 'ottawashooting'
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = charlie
 
 # Get the current working directory
 current_directory = os.getcwd()
@@ -91,6 +92,10 @@ def csv_dict_position(pos, graph_name):
 def plot_graph(G, network):
     fig, ax = plt.subplots(figsize=(12, 7))
 
+    # Remove nodes that do not have 'followers' attribute
+    nodes_to_remove = [n for n, attr in G.nodes(data=True) if 'followers' not in attr]
+    G.remove_nodes_from(nodes_to_remove)
+
     pos = nx.spring_layout(G, k=0.155, seed=3968461)
     position_to_csv(pos, FOLDER + "_" + network)
     # pos = {} 
@@ -99,12 +104,24 @@ def plot_graph(G, network):
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
 
+    node_sizes = []
+    if network == 'tweets':
+        standard_size = 20
+        node_sizes =  [G.nodes[n]['retweets'] + standard_size for n in G.nodes]
+    elif network == "following":
+        standard_size = 20
+        print
+        node_sizes =  [(G.nodes[n]['followers']/1000) + standard_size for n in G.nodes]   
+        #node_sizes =  [G.nodes[n]['followers'] + standard_size for n in G.nodes]   
+
+
+
     nx.draw_networkx(
             G,
             pos = pos,
             with_labels = False,
             node_color = node_color,
-            node_size = 20,
+            node_size = node_sizes,
             edge_color = "gainsboro",
             alpha = 0.4,
         )
@@ -115,8 +132,10 @@ def plot_graph(G, network):
         reply_patch = mpatches.Patch(color='purple', label='Reply Tweet')
         plt.legend(handles=[source_patch, reply_patch])
     else:
-        user_patch = mpatches.Patch(color='purple', label='User')
-        plt.legend(handles=[user_patch])
+        user_source_patch = mpatches.Patch(color='red', label='User of Source tweet')
+        user_reply_patch = mpatches.Patch(color='purple', label='User of a Reply')
+        plt.legend(handles=[user_source_patch, user_reply_patch])
+  
 
 
     # Title/legend
@@ -153,6 +172,7 @@ def creation_of_network(G, network):
                     tweet_connections(G, data)
                 
                 elif network == "following" and "who-follows" in file_path:
+                    print("check")
                     with open(file_path, 'r') as file:
                         for line in file:
                             # Split each line by the tab character to get follower and followed
@@ -162,13 +182,48 @@ def creation_of_network(G, network):
                             
                             # Add the follower relationship to the graph
                             add_follower(G, follower, followed)
+
+                if "source-tweet" in root:
+                    print("check st")
+                    print("source")
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        with open(file_path, 'r') as file:
+                            data = json.load(file)
+                            if network == "tweets":
+                                id = data["id_str"]    
+                                retweet_count = data["retweet_count"]  
+                                G.add_node(id, color = 'red', retweets = retweet_count)
+                            elif network == "following":
+                                user_id = str(data['user']['id'])
+                                followers_count = data['user']['followers_count']
+                                print(f"{user_id} and follow count {followers_count}")
+                                G.add_node(user_id, color = 'red', followers = followers_count)
+
+
+                if "reaction" in root:
+                    print("check rect")
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        with open(file_path, 'r') as file:
+                            data = json.load(file)
+                            if network == "tweets":
+                                id = data["id_str"] # Tweet ID
+                                retweet_count = data["retweet_count"]  
+                                G.add_node(id, color = 'purple', retweets = retweet_count)
+                            elif network == "following":
+                                user_id = str(data['user']['id'])
+                                followers_count = data['user']['followers_count']
+                                print(f"{user_id} and follow count {followers_count}")
+                                G.add_node(user_id, color = 'purple', followers = followers_count)   
+
                     
     # print("Number of Nodes:", len(list(G.nodes)))
     #print("Number of Edges:", len(list(G.edges)))            
 
 
-    # plot_graph(G, network)
-    # plt.show()
+    plot_graph(G, network)
+    #plt.show()
 
 
 
@@ -177,11 +232,12 @@ def creation_of_network(G, network):
 ##### MAIN
 
 
-creation_of_network(T, "tweets")
-#creation_of_network(F, "following")
+#creation_of_network(T, "tweets")
+creation_of_network(F, "following")
+plt.show()
 
 
-metric_report(T, FOLDER + "_" + "tweets")
+#metric_report(T, FOLDER + "_" + "tweets")
 #metric_report(F, FOLDER + "_" + "following")
 
 

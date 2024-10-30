@@ -327,8 +327,6 @@ for root, dirs, files in os.walk(current_directory):
                     id = data["id_str"] # Tweet ID
                     parent = str(data["in_reply_to_status_id"]) # Parent node
                     created_at = data["created_at"]
-                    user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
-                    time_zone = user_data.get('time_zone', 'NaN')
                     time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
 
                     # Add tweet to the list of tweets
@@ -346,7 +344,6 @@ for root, dirs, files in os.walk(current_directory):
                     data = json.load(file)
                     id = data["id_str"]
                     created_at = data["created_at"]
-                    user_data = data.get('user', {})  # Get 'user' data, or an empty dict if it doesn't exist
                     time_stamp_utc0 = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
 
                     # Add tweet to the list of tweets
