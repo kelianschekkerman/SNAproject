@@ -7,6 +7,7 @@ from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 from metrics import metric_report
+from community_metrics import community_metric_report
 
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
@@ -217,29 +218,26 @@ def creation_of_network(G, network):
                                 print(f"{user_id} and follow count {followers_count}")
                                 G.add_node(user_id, color = 'purple', followers = followers_count)   
 
-                    
     # print("Number of Nodes:", len(list(G.nodes)))
     #print("Number of Edges:", len(list(G.edges)))            
-
 
     plot_graph(G, network)
     #plt.show()
 
-
-
-
-
 ##### MAIN
-
 
 #creation_of_network(T, "tweets")
 creation_of_network(F, "following")
 plt.show()
 
-
 #metric_report(T, FOLDER + "_" + "tweets")
 #metric_report(F, FOLDER + "_" + "following")
 
+community_metric_report(F, FOLDER + "_" + "following")
+
+
+
+### Notes
 
 # Structure.json
 # {A: {B: {C,D}}, {E:{F}}, G, H}
