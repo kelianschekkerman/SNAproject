@@ -93,9 +93,9 @@ def csv_dict_position(pos, graph_name):
 def plot_graph(G, network):
     fig, ax = plt.subplots(figsize=(12, 7))
 
-    # Remove nodes that do not have 'followers' attribute
-    nodes_to_remove = [n for n, attr in G.nodes(data=True) if 'followers' not in attr]
-    G.remove_nodes_from(nodes_to_remove)
+    # Remove retweet user nodes that do not have 'followers' attribute
+    #nodes_to_remove = [n for n, attr in G.nodes(data=True) if 'followers' not in attr]
+    #G.remove_nodes_from(nodes_to_remove)
 
     pos = nx.spring_layout(G, k=0.155, seed=3968461)
     position_to_csv(pos, FOLDER + "_" + network)
@@ -104,18 +104,13 @@ def plot_graph(G, network):
 
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
-
     node_sizes = []
+    standard_size = 20
     if network == 'tweets':
-        standard_size = 20
         node_sizes =  [G.nodes[n]['retweets'] + standard_size for n in G.nodes]
     elif network == "following":
-        standard_size = 20
-        print
-        node_sizes =  [(G.nodes[n]['followers']/1000) + standard_size for n in G.nodes]   
+        node_sizes =  [standard_size for n in G.nodes]   
         #node_sizes =  [G.nodes[n]['followers'] + standard_size for n in G.nodes]   
-
-
 
     nx.draw_networkx(
             G,
@@ -136,8 +131,6 @@ def plot_graph(G, network):
         user_source_patch = mpatches.Patch(color='red', label='User of Source tweet')
         user_reply_patch = mpatches.Patch(color='purple', label='User of a Reply')
         plt.legend(handles=[user_source_patch, user_reply_patch])
-  
-
 
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
@@ -151,8 +144,6 @@ def plot_graph(G, network):
     plt.axis("off")
 
     # plt.show()
-
-
 
 
 def creation_of_network(G, network):
@@ -198,7 +189,7 @@ def creation_of_network(G, network):
                             elif network == "following":
                                 user_id = str(data['user']['id'])
                                 followers_count = data['user']['followers_count']
-                                print(f"{user_id} and follow count {followers_count}")
+                                #print(f"{user_id} and follow count {followers_count}")
                                 G.add_node(user_id, color = 'red', followers = followers_count)
 
 
@@ -215,7 +206,7 @@ def creation_of_network(G, network):
                             elif network == "following":
                                 user_id = str(data['user']['id'])
                                 followers_count = data['user']['followers_count']
-                                print(f"{user_id} and follow count {followers_count}")
+                                #print(f"{user_id} and follow count {followers_count}")
                                 G.add_node(user_id, color = 'purple', followers = followers_count)   
 
     # print("Number of Nodes:", len(list(G.nodes)))

@@ -48,5 +48,39 @@ def louvain(G, folder_name):
     with open(r"csv\louvain_" + folder_name + ".csv", "w") as f:
         f.write('\n'.join(f'{community}' for community in louvain_list))
 
+
+
+
 def community_metric_report(G, folder_name):
     girvan_list_csv(G, folder_name)
+
+    # # Find all cliques
+    cliques = list(nx.find_cliques(G)) 
+    print("Cliques:", cliques)
+
+    # To find the largest cliques
+    max_clique = max(cliques, key=len)
+    print("Largest clique:", max_clique)
+
+
+    # Homophily analysis
+    # Count edges where nodes share the same group
+    # homophily_edges = sum(1 for u, v in G.edges() if G.nodes[u]['group'] == G.nodes[v]['group'])
+    # total_edges = G.number_of_edges()
+    # homophily_ratio = homophily_edges / total_edges if total_edges > 0 else 0
+    # print("Homophily Ratio:", homophily_ratio)
+
+
+
+    # Calculate betweenness centrality for nodes
+    betweenness = nx.betweenness_centrality(G)
+
+    # Identify nodes with high betweenness centrality
+    bridge_nodes = [node for node, centrality in betweenness.items() if centrality > 0.1]  # 0.1 is an example threshold
+    print("The number of Bridge nodes:", len(bridge_nodes))
+
+
+
+
+
+
