@@ -7,7 +7,7 @@ from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 from metrics import metric_report
-from community_metrics import community_metric_report, remove_noise
+from community_metrics import community_metric_report, remove_noise, plot_community_graph
 
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
@@ -21,7 +21,7 @@ COLOR_REPLY_TWEET = "green"
 COLOR_RETWEET_TWEET = "blue"
 
 # Pick a folder
-FOLDER = charlie
+FOLDER = putin
 
 # Get the current working directory
 current_directory = os.getcwd()
@@ -49,7 +49,7 @@ def add_tweet(G, parent, tweet_id):
 def tweet_connections(G, thread, parent = None):
     for tweet_id, replies in thread.items():
         if parent:
-            # print(f"Connection: {parent} -> {tweet_id}")
+            print(f"Connection: {parent} -> {tweet_id}")
             add_tweet(G, parent, tweet_id)
         else:                                                                               # Source tweet
             G.add_node(tweet_id, color = COLOR_SOURCE_TWEET)
@@ -101,11 +101,6 @@ def plot_graph(G, network):
     #nodes_to_remove = [n for n, attr in G.nodes(data=True) if 'followers' not in attr]
     #G.remove_nodes_from(nodes_to_remove)
 
-    if REMOVE_NOISE:
-        remove_noise(G)
-        print("Number of Nodes:", len(list(G.nodes)))
-        print("Number of Edges:", len(list(G.edges)))    
-
     pos = nx.spring_layout(G, k=0.155, seed=3968461)
     position_to_csv(pos, FOLDER + "_" + network)
     # pos = {} 
@@ -145,12 +140,15 @@ def plot_graph(G, network):
         plt.legend(handles=[user_source_patch, user_reply_patch,user_retweet_patch])
 
     # Add node labels only for nodes that have the 'name' attribute
-    labels = {node: attr['name'] for node, attr in G.nodes(data=True) if 'name' in attr}
-    nx.draw_networkx_labels(G, pos, labels, font_size=10)
+        labels = {node: attr['name'] for node, attr in G.nodes(data=True) if 'name' in attr}
+        nx.draw_networkx_labels(G, pos, labels, font_size=10)
 
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
-    ax.set_title(f"Folder: {FOLDER}, network of {network}", font)
+    if network == "tweets":
+        ax.set_title(f"Folder: {FOLDER}, network of tweets, node size represents the number of retweets", font)
+    else:
+        ax.set_title(f"Folder: {FOLDER}, network of following, node size represents the number of followers", font)
     # Change font color for legend
     font["color"] = "r"
 
@@ -206,7 +204,7 @@ def creation_of_network(G, network):
                                 id = data["id_str"]    
                                 retweet_count = data["retweet_count"]
                                 name = data['user']['name'] 
-                                # print(name)
+                                print(name)
                                 G.add_node(id, name = name, color = COLOR_SOURCE_TWEET, retweets = retweet_count)
                             elif network == "following":
                                 user_id = str(data['user']['id'])
@@ -236,21 +234,29 @@ def creation_of_network(G, network):
     print("Number of Nodes:", len(list(G.nodes)))
     print("Number of Edges:", len(list(G.edges)))            
 
+    if REMOVE_NOISE:
+        remove_noise(G)
+        print("Number of Nodes:", len(list(G.nodes)))
+        print("Number of Edges:", len(list(G.edges)))  
+
     plot_graph(G, network)
+
     #plt.show()
 
 ##### MAIN
 
-# creation_of_network(T, "tweets")
-creation_of_network(F, "following")
-# plt.show()
+creation_of_network(T, "tweets")
+#creation_of_network(F, "following")
+plt.show()
 
-# metric_report(T, FOLDER + "_" + "tweets")
-metric_report(F, FOLDER + "_" + "following")
+#metric_report(T, FOLDER + "_" + "tweets")
+#metric_report(F, FOLDER + "_" + "following")
 
 #community_metric_report(F, FOLDER + "_" + "following")
 
 
+
+#plot_community_graph(F, FOLDER, "following", 'Louvain')
 
 ### Notes
 

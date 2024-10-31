@@ -1,11 +1,28 @@
 import csv
+import ast
 import numpy as np
 import networkx as nx
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import matplotlib.patches as mpatches
+
 from networkx.algorithms.community.centrality import girvan_newman
+
+
+# For Clustering colors
+colors = mcolors.CSS4_COLORS
+html_colors = list(colors.values())[10:]
+color_list = html_colors
+del color_list[13:17]
+colors2 = mcolors.XKCD_COLORS
+html_colors2 = list(colors2.values())
+color_list = color_list + html_colors2
+
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def remove_noise(G):
-    """ For Girvan Newman. Removes nodes from graph with values, which have no connection 
+    """ Removes nodes from graph with values, which have no connection 
     to other nodes.
     @param G: The NetworkX graph.
     """ 
@@ -37,18 +54,11 @@ def girvan_list_csv(G, folder_name):
             csv_writer.writerow(t)
             i = i + 1
 
-# This function is from the Bachelor Thesis of Joy Kwant
-def louvain(G, folder_name):
-    """ Perform the Louvain algorithm for clustering of graph G, with the weight attribute of the edges,
-    and stores the outcome list in a csv file.
-    @param G: The NetworkX graph.
-    """ 
-    louvain_list = nx.community.louvain_communities(G, weight= 'weight', seed=101)
-    with open(r"csv\louvain_" + folder_name + ".csv", "w") as f:
-        f.write('\n'.join(f'{community}' for community in louvain_list))
+
 
 def community_metric_report(G, folder_name):
     girvan_list_csv(G, folder_name)
+    # Louvain is already in the plot_communities
 
     # Homophily analysis
     # Count edges where nodes share the same group
@@ -64,6 +74,124 @@ def community_metric_report(G, folder_name):
     bridge_nodes = [node for node, centrality in betweenness.items() if centrality > 0.1]  # 0.1 is an example threshold
     print("The number of Bridge nodes:", len(bridge_nodes))
 
+
+
+
+def girvan_list_from_csv(gn_list, folder_name):
+    """ Imports the Girvan Newman clustering of one iteration.
+    @param gn_list: Empty list for the Girvan Newman communites list.
+    """
+    with open(r"csv\girvan_newman_t=1_" + folder_name + ".csv", newline='') as csvfile:
+        data = csv.reader(csvfile)
+        for row in data:
+            for item in row:  # Each item in `row` is a string representation of a list
+                community = ast.literal_eval(item)  # Convert string to list of node IDs
+                gn_list.append(community)
+
+
+# Import
+# This function is from Bachelor Thesis of Joy Kwant
+def csv_dict_position(pos, graph_name):
+    """ Imports the position dictionary, for each node there is a x,y-coordinate.
+    @param pos: empty position dictionary.
+    @param graph_name: name of graph (tweet or following) with folder name.
+    """
+    with open(r'csv\pos_dic_'+ graph_name + '.csv', newline='') as csvfile:
+        data = csv.reader(csvfile)
+        for row in data:
+            pos.setdefault(row[0])
+            pos[row[0]] = [float(row[1]), float(row[2])]    
+
+
+# This function is from Bachelor Thesis of Joy Kwant
+def plot_community_graph(G, FOLDER, network, c_name = ' ',):
+    """ Plots the graph G.
+    @param G: The NetworkX graph.
+    @param c_name: The name of the community method.
+    @param
+    """ 
+    pos = {}
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    font = {"color": "k", "fontweight": "bold", "fontsize": 10}                             # Title/legend.
+    font["color"] = "black"                                                                 # Change font color for legend.
+    
+    csv_dict_position(pos, FOLDER + "_" + network)                                          # Fetch postions.
+    node_color = []                                                                         # Initialize list for node colors.
+    
+    if 'putin' in FOLDER:
+        print("delete")
+        del color_list[8]
+    
+
+    # Plotting community colors if true.
+   
+    cluster_list = []
+    matchpatch_list = []
+    dict_node_color = {}
+    com = 0
+    total_members = 0
+    
+    if c_name == 'Girvan Newman':
+    # Plotting the clustering of girvan newman algorithm.
+        girvan_list_from_csv(cluster_list, FOLDER + "_" + network)                                      # Imports Girvan Newman communities from csv file.
+        #remove_noise(G)                                                                                # Noise is not in Girvan Newman.
+    elif c_name == 'Louvain':
+        cluster_list = nx.community.louvain_communities(G, weight= 'weight', seed=101)
+
+    print(len(cluster_list))
+
+    # Assign colors to each node per community in a seperate dictionary.
+    for community in cluster_list:
+        members = 0
+        for n_id in community:
+            dict_node_color[n_id] = color_list[com + 1]
+            members = members + 1
+        
+        # Add mpatch to list for legend.
+        if members >= 10:
+            community_color = mpatches.Patch(color = color_list[com + 1], label = 'Com. ' + str(com+1) + ', ' + r"$\rho$"+ ' = ' + str(members))
+            matchpatch_list.append(community_color)    
+        com = com + 1
+        total_members += members  
+     
+    
+    node_color = [dict_node_color[n] for n in G.nodes()]                                # List of colors.
+
+    avg_member = int(total_members/com + 1)
+
+    # Set title.
+    if c_name == 'Girvan Newman':    
+        ax.set_title(f"Folder: {FOLDER}, communties by the {c_name}, iteration = 1, of network of {network},\n with a total of {com} communties and an average of {avg_member} members per community", font)
+    else:
+        ax.set_title(f"Folder: {FOLDER}, communties by the {c_name} of network of {network},\n with a total of {com} communties and an average of {avg_member} members per community", font)
+    # Set legend.
+    ax.legend(handles = matchpatch_list, ncol=2)                                  
+  
+    node_size = 20
+
+    nx.draw_networkx(
+        G,
+        pos = pos,
+        with_labels = False,
+        node_color = node_color,
+        node_size = node_size,
+        edge_color = "gainsboro",
+        alpha = 0.4,
+    )
+
+    # Title/legend
+    font = {"color": "k", "fontweight": "bold", "fontsize": 10}
+    # Change font color for legend
+    font["color"] = "b"
+
+
+    # Resize figure for label readability
+    ax.margins(0.1, 0.05)
+    fig.tight_layout()
+    plt.axis("off")
+
+    plt.show()
 
 
 
