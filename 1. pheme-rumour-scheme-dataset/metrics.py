@@ -192,7 +192,7 @@ def metric_report(G, G_name):
     degree distribution, centrality indices, clustering coefficient,
     network diameter, density, number of connected components and, size of
     the connected components.
-    Save the results of the metrics to a csv/txt file.  # TODO: update file format
+    Save the results of the metrics to a csv file
     @param G: The NetworkX graph.
     @param graph_name: The name of the graph G (AA, DA, ..).
     """

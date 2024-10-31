@@ -21,7 +21,7 @@ COLOR_REPLY_TWEET = "green"
 COLOR_RETWEET_TWEET = "blue"
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = charlie
 
 # Get the current working directory
 current_directory = os.getcwd()
@@ -49,7 +49,7 @@ def add_tweet(G, parent, tweet_id):
 def tweet_connections(G, thread, parent = None):
     for tweet_id, replies in thread.items():
         if parent:
-            print(f"Connection: {parent} -> {tweet_id}")
+            # print(f"Connection: {parent} -> {tweet_id}")
             add_tweet(G, parent, tweet_id)
         else:                                                                               # Source tweet
             G.add_node(tweet_id, color = COLOR_SOURCE_TWEET)
@@ -206,7 +206,7 @@ def creation_of_network(G, network):
                                 id = data["id_str"]    
                                 retweet_count = data["retweet_count"]
                                 name = data['user']['name'] 
-                                print(name)
+                                # print(name)
                                 G.add_node(id, name = name, color = COLOR_SOURCE_TWEET, retweets = retweet_count)
                             elif network == "following":
                                 user_id = str(data['user']['id'])
@@ -241,12 +241,12 @@ def creation_of_network(G, network):
 
 ##### MAIN
 
-creation_of_network(T, "tweets")
-#creation_of_network(F, "following")
-plt.show()
+# creation_of_network(T, "tweets")
+creation_of_network(F, "following")
+# plt.show()
 
-#metric_report(T, FOLDER + "_" + "tweets")
-#metric_report(F, FOLDER + "_" + "following")
+# metric_report(T, FOLDER + "_" + "tweets")
+metric_report(F, FOLDER + "_" + "following")
 
 #community_metric_report(F, FOLDER + "_" + "following")
 

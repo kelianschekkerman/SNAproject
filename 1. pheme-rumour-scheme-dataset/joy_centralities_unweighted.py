@@ -24,7 +24,7 @@ def centrality_degree_unweight(G, graph_name):
     centrality_degree = sorted(centrality_degree.items(), key = operator.itemgetter(1), reverse = True)
     
     with open(r'csv\degree_unweighted_desc_'+ graph_name + '.csv', 'w') as f:
-       f.write('\n'.join(f'{tup[0]},{tup[1]}' for tup in centrality_degree))
+       f.write('\n'.join(f'{tup[0]}, {tup[1]}' for tup in centrality_degree))
 
     top_ten_degree = centrality_degree[:10]
     print("Top ten degree is \n", top_ten_degree)
@@ -41,7 +41,7 @@ def centrality_betweeness_list(G, graph_name):
 
     # Put Descending list in csv
     with open(r'csv\betweeness_centrality_desc_'+ graph_name + '.csv', 'w') as f:
-       f.write('\n'.join(f'{tup[0]} {tup[1]}' for tup in centrality_betweeness))
+       f.write('\n'.join(f'{tup[0]}, {tup[1]}' for tup in centrality_betweeness))
 
     top_ten_betweenness = centrality_betweeness[:10]
     print("Top ten betweeness is \n", top_ten_betweenness)
@@ -59,7 +59,7 @@ def centrality_closeness_list(G, graph_name):
 
     # Put Descending list in csv
     with open(r'csv\closeness_centrality_desc_'+ graph_name + '.csv', 'w') as f:
-       f.write('\n'.join(f'{tup[0]} {tup[1]}' for tup in centrality_closeness))
+       f.write('\n'.join(f'{tup[0]}, {tup[1]}' for tup in centrality_closeness))
 
     top_ten_closeness = centrality_closeness[:10]
     print("Top ten closeness is \n", top_ten_closeness)  
@@ -84,7 +84,7 @@ def centrality_eigenvector_list(G, graph_name):
 
     # Put Descending list in csv
     with open(r'csv\eigenvector_desc_'+ graph_name + '.csv', 'w') as f:
-       f.write('\n'.join(f'{tup[0]} {tup[1]}' for tup in centrality_eigenvector))
+       f.write('\n'.join(f'{tup[0]}, {tup[1]}' for tup in centrality_eigenvector))
 
     top_ten_eigenvector = centrality_eigenvector[:10]
     print("Top ten eigenvector is \n", top_ten_eigenvector) 
