@@ -140,8 +140,8 @@ def plot_graph(G, network):
         plt.legend(handles=[user_source_patch, user_reply_patch,user_retweet_patch])
 
     # Add node labels only for nodes that have the 'name' attribute
-        labels = {node: attr['name'] for node, attr in G.nodes(data=True) if 'name' in attr}
-        nx.draw_networkx_labels(G, pos, labels, font_size=10)
+    labels = {node: attr['name'] for node, attr in G.nodes(data=True) if 'name' in attr}
+    nx.draw_networkx_labels(G, pos, labels, font_size=10)
 
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
