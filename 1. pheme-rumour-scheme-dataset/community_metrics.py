@@ -57,25 +57,22 @@ def girvan_list_csv(G, folder_name):
 
 
 def community_metric_report(G, folder_name):
-    girvan_list_csv(G, folder_name)
+    # girvan_list_csv(G, folder_name)
     # Louvain is already in the plot_communities
 
     # Homophily analysis
-    # Count edges where nodes share the same group
-    # homophily_edges = sum(1 for u, v in G.edges() if G.nodes[u]['group'] == G.nodes[v]['group'])
-    # total_edges = G.number_of_edges()
-    # homophily_ratio = homophily_edges / total_edges if total_edges > 0 else 0
-    # print("Homophily Ratio:", homophily_ratio)
+    # Count edges (connections) where nodes (users) share the same timezone
+    homophily_edges = sum(1 for u, v in G.edges() if G.nodes[u]['time_zone'] == G.nodes[v]['time_zone'])
+    total_edges = G.number_of_edges()
+    homophily_ratio = homophily_edges / total_edges if total_edges > 0 else 0
+    print("Homophily Ratio:", homophily_ratio)
 
-    # Calculate betweenness centrality for nodes
-    betweenness = nx.betweenness_centrality(G)
+    # # Calculate betweenness centrality for nodes
+    # betweenness = nx.betweenness_centrality(G)
 
-    # Identify nodes with high betweenness centrality
-    bridge_nodes = [node for node, centrality in betweenness.items() if centrality > 0.1]  # 0.1 is an example threshold
-    print("The number of Bridge nodes:", len(bridge_nodes))
-
-
-
+    # # Identify nodes with high betweenness centrality (putin = 0.025 (3 bridges), german = 0.0001 (38 bridges), charlie = 0.003 (62 bridges))
+    # bridge_nodes = [node for node, centrality in betweenness.items() if centrality > 0.025]
+    # print("The number of Bridge nodes:", len(bridge_nodes))
 
 def girvan_list_from_csv(gn_list, folder_name):
     """ Imports the Girvan Newman clustering of one iteration.
@@ -87,7 +84,6 @@ def girvan_list_from_csv(gn_list, folder_name):
             for item in row:  # Each item in `row` is a string representation of a list
                 community = ast.literal_eval(item)  # Convert string to list of node IDs
                 gn_list.append(community)
-
 
 # Import
 # This function is from Bachelor Thesis of Joy Kwant

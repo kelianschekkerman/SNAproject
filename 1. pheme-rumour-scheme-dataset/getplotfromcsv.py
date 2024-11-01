@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Define file paths
-file_paths = {
+file_paths_centrality = {
     "charlie_following_betweenness": "csv/charlie_following/betweeness_centrality_desc_charliehebdo_following.csv",
     "charlie_following_closeness": "csv/charlie_following/closeness_centrality_desc_charliehebdo_following.csv",
     "charlie_following_degree": "csv/charlie_following/degree_unweighted_desc_charliehebdo_following.csv",
@@ -36,8 +36,19 @@ file_paths = {
     "putin_tweets_eigenvector": "csv/putin_tweets/eigenvector_desc_putinmissing_tweets.csv",
 }
 
+file_paths_hits = {
+    "charlie_authorities": "csv\charlie_following\hits_authorities_charliehebdo_following.csv",
+    "charlie_hubs": "csv\charlie_following\hits_hubs_charliehebdo_following.csv",
+
+    "germanwings_authorities": "csv\german-wing_following\hits_authorities_germanwings-crash_following.csv",
+    "germanwings_hubs": "csv\german-wing_following\hits_hubs_germanwings-crash_following.csv",
+
+    "putin_authorities": "csv\putin_following\hits_authorities_putinmissing_following.csv",
+    "putin_hubs": "csv\putin_following\hits_hubs_putinmissing_following.csv",
+}
+
 # Define plot configurations
-plot_configs = [
+plot_configs_centrality = [
     # Following data
     ("Following Betweenness", ["charlie_following_betweenness", "germanwings_crash_following_betweenness", "putin_following_betweenness"]),
     ("Following Closeness", ["charlie_following_closeness", "germanwings_crash_following_closeness", "putin_following_closeness"]),
@@ -50,6 +61,16 @@ plot_configs = [
     ("Tweets Degree", ["charlie_tweets_degree", "germanwings_crash_tweets_degree", "putin_tweets_degree"]),
     ("Tweets Eigenvector", ["charlie_tweets_eigenvector", "germanwings_crash_tweets_eigenvector", "putin_tweets_eigenvector"])
 ]
+
+plot_configs_hits = [
+    ("Authorities", ["charlie_authorities", "germanwings_authorities", "putin_authorities"]),
+    ("Hubs", ["charlie_hubs", "germanwings_hubs", "putin_hubs"])
+]
+
+# file_paths = file_paths_centrality
+# plot_configs = plot_configs_centrality
+file_paths = file_paths_hits
+plot_configs = plot_configs_hits
 
 # Load CSV files into a dictionary of DataFrames
 dataframes = {name: pd.read_csv(path, header=None) for name, path in file_paths.items()}
@@ -74,6 +95,7 @@ for title, data_keys in plot_configs:
 
     # Save the figure
     filename = f"{title.replace(' ', '_').lower()}.png"  # Replace spaces with underscores and convert to lowercase
-    plt.savefig(os.path.join("../Graphs/centralities", filename))
+    # plt.savefig(os.path.join("../Graphs/centralities", filename))
+    plt.savefig(os.path.join("../Graphs/hits", filename))
 
     plt.show()
