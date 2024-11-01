@@ -245,9 +245,19 @@ def creation_of_network(G, network):
 
 ##### MAIN
 
-creation_of_network(T, "tweets")
-#creation_of_network(F, "following")
+#creation_of_network(T, "tweets")
+creation_of_network(F, "following")
 plt.show()
+
+
+# l = [ 5402612 , 169019017 , 612473,  21494202, 7589572 , 20271861, 143415291, 114731960 , 22595388 , 277021346 , 2190056023 , 110576660 , 8442372 , 125554853 , 86740435 , 18932416 , 1041442471 , 351065029 , 2362152704 , 41377658]
+
+# for id in l:
+#     str_id = (str(id))
+#     print(str_id)
+#     print(F.nodes(data=True)[str_id])
+
+
 
 #metric_report(T, FOLDER + "_" + "tweets")
 #metric_report(F, FOLDER + "_" + "following")
@@ -256,7 +266,7 @@ plt.show()
 
 
 
-#plot_community_graph(F, FOLDER, "following", 'Louvain')
+plot_community_graph(F, FOLDER, "following", 'Louvain')
 
 ### Notes
 

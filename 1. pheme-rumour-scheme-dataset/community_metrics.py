@@ -111,7 +111,7 @@ def plot_community_graph(G, FOLDER, network, c_name = ' ',):
     @param
     """ 
     pos = {}
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 7))
     
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}                             # Title/legend.
     font["color"] = "black"                                                                 # Change font color for legend.
@@ -122,6 +122,9 @@ def plot_community_graph(G, FOLDER, network, c_name = ' ',):
     if 'putin' in FOLDER:
         print("delete")
         del color_list[8]
+        if "Girvan" in c_name: 
+            del color_list[5]
+            del color_list[11]
     
 
     # Plotting community colors if true.
@@ -149,9 +152,9 @@ def plot_community_graph(G, FOLDER, network, c_name = ' ',):
             members = members + 1
         
         # Add mpatch to list for legend.
-        if members >= 10:
-            community_color = mpatches.Patch(color = color_list[com + 1], label = 'Com. ' + str(com+1) + ', ' + r"$\rho$"+ ' = ' + str(members))
-            matchpatch_list.append(community_color)    
+        #if members >= 500:
+        community_color = mpatches.Patch(color = color_list[com + 1], label = 'Com. ' + str(com+1) + ', ' + r"$\rho$"+ ' = ' + str(members))
+        matchpatch_list.append(community_color)    
         com = com + 1
         total_members += members  
      
@@ -166,7 +169,7 @@ def plot_community_graph(G, FOLDER, network, c_name = ' ',):
     else:
         ax.set_title(f"Folder: {FOLDER}, communties by the {c_name} of network of {network},\n with a total of {com} communties and an average of {avg_member} members per community", font)
     # Set legend.
-    ax.legend(handles = matchpatch_list, ncol=2)                                  
+    ax.legend(handles = matchpatch_list)                                  
   
     node_size = 20
 
