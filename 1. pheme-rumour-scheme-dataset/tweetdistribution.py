@@ -33,7 +33,7 @@ putin = 'putinmissing'
 ottawa = 'ottawashooting'
 
 # Pick a folder
-FOLDER = german_airplane
+FOLDER = charlie
 
 current_directory = os.getcwd()
 
@@ -205,11 +205,9 @@ def plot_graph(G, network, current_iteration, lower, upper):
     reply_patch = mpatches.Patch(color='black', label='Reply Tweet')
     plt.legend(handles=[misinfo_patch, facts_patch, uncertain_patch, reply_patch])
 
-
-
     # Title/legend
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}
-    ax.set_title(f"Folder: {FOLDER}, network of {network}, iteration = {current_iteration}, times between {lower.strftime("%Y-%m-%d %H:%M")} and {upper.strftime("%Y-%m-%d %H:%M")}", font)
+    ax.set_title(f"Folder: {FOLDER}, network of {network}, iteration = {current_iteration}, times between {lower.strftime('%Y-%m-%d %H:%M')} and {upper.strftime('%Y-%m-%d %H:%M')}", font)
     # Change font color for legend
     font["color"] = "r"
 
@@ -217,6 +215,9 @@ def plot_graph(G, network, current_iteration, lower, upper):
     ax.margins(0.1, 0.05)
     fig.tight_layout()
     plt.axis("off")
+
+    # Save the figure
+    plt.savefig(os.path.join("../Graphs/tweet_distribution", f"tweet_dist_{FOLDER}_iter={current_iteration}"))
 
     #plt.show()
 
@@ -274,7 +275,11 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timest
     ax.legend()
 
     # Show plot
+
     plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join("../Graphs/tweet_distribution/", f"barlot_tweets_{FOLDER}"))
+
     plt.show()
 
 

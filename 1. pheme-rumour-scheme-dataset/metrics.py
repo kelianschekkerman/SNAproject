@@ -59,12 +59,15 @@ def cluster_coefficient(G, graph_name):
 
     # Put Descending list in csv
     with open(f'csv\clustercoeff_{graph_name}_desc.csv', 'w') as f:
-       f.write('\n'.join(f'{tup[0]},{tup[1]}' for tup in cc))
+        f.write('\n'.join(f'{tup[0]},{tup[1]}' for tup in cc))
 
-    top_ten_cc = cc[:10]
-    print("Top ten cluster coefficients are \n", top_ten_cc)
+    # Extract the values (the second element of each tuple) and convert to a NumPy array
+    values = np.array([value for _, value in cc])
 
-    return top_ten_cc      
+    # Calculate the average using NumPy
+    avg_cc = np.mean(values)
+
+    return avg_cc
 
 
 # This function is from the Bachelor Thesis of Joy Kwant
@@ -221,7 +224,7 @@ def metric_report(G, G_name):
 
     # Clustering coefficient
     top_ten_ccoeff = cluster_coefficient(G, G_name)
-    write_to_csv_file("Top ten cluster coefficients", top_ten_ccoeff, G_name)
+    write_to_csv_file("Average cluster coefficient", top_ten_ccoeff, G_name)
     
     # Network diameter
     # Returns the diameter of the graph G.
@@ -230,7 +233,7 @@ def metric_report(G, G_name):
 
     # Graph density
     graph_density = nx.density(G)
-    write_to_csv_file("Density", diameter, G_name)
+    write_to_csv_file("Density", graph_density, G_name)
     print(f"The graph density is: {graph_density}")
 
     top_ten_h, top_ten_a = hits(G, G_name)
@@ -241,12 +244,12 @@ def metric_report(G, G_name):
     if not G.is_directed():
         # Undirected graph
         con_comp, cc_largest = undirected_connected_components(G)
-        write_to_csv_file("The number of the connected components", con_comp, G_name)
+        write_to_csv_file("The number of the connected components", len(con_comp), G_name)
         write_to_csv_file("The size of the largest connected component", cc_largest, G_name)
     else:
         # Directed graph: get strongly and weakly connected components
         strong_con_comp, weak_con_comp, scc_largest, wcc_largest = directed_connected_components(G)
-        write_to_csv_file("The number of strongly connected components", strong_con_comp, G_name)
-        write_to_csv_file("The number of weakly connected components", weak_con_comp, G_name)
+        write_to_csv_file("The number of strongly connected components", len(strong_con_comp), G_name)
+        write_to_csv_file("The number of weakly connected components", len(weak_con_comp), G_name)
         write_to_csv_file("The size of the largest strongly connected component", scc_largest, G_name)
         write_to_csv_file("The size of the largest weakly connected component", wcc_largest, G_name)
