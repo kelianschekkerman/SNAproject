@@ -74,6 +74,9 @@ def community_metric_report(G, folder_name):
     # bridge_nodes = [node for node, centrality in betweenness.items() if centrality > 0.025]
     # print("The number of Bridge nodes:", len(bridge_nodes))
 
+
+
+
 def girvan_list_from_csv(gn_list, folder_name):
     """ Imports the Girvan Newman clustering of one iteration.
     @param gn_list: Empty list for the Girvan Newman communites list.

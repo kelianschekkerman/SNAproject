@@ -33,6 +33,13 @@ T = nx.Graph()
 F = nx.DiGraph()
 
 
+# For calling functions
+CREATION_TWEETS_NETWORK = True
+CREATION_FOLLOWING_NETWORK = False
+METRICS_REPORT = False
+COMMUNITY_REPORT = False
+PLOT_COMMUNITIES = False
+
 
 def add_tweet(G, parent, tweet_id):
     # Add nodes
@@ -49,7 +56,7 @@ def add_tweet(G, parent, tweet_id):
 def tweet_connections(G, thread, parent = None):
     for tweet_id, replies in thread.items():
         if parent:
-            # print(f"Connection: {parent} -> {tweet_id}")
+            print(f"Connection: {parent} -> {tweet_id}")
             add_tweet(G, parent, tweet_id)
         else:                                                                               # Source tweet
             G.add_node(tweet_id, color = COLOR_SOURCE_TWEET)
@@ -61,8 +68,6 @@ def tweet_connections(G, thread, parent = None):
 
 
 def add_follower(G, follower, followed):
-
-
     # Place edge
     G.add_edge(follower, followed)
 
@@ -127,7 +132,6 @@ def plot_graph(G, network):
         )
     
     
-
     if network == "tweets":
         # Create a legend using mpatches for the source and reply colors
         source_patch = mpatches.Patch(color=COLOR_SOURCE_TWEET, label='Source Tweet')
@@ -204,7 +208,7 @@ def creation_of_network(G, network):
                                 id = data["id_str"]    
                                 retweet_count = data["retweet_count"]
                                 name = data['user']['name'] 
-                                # print(name)
+                                print(name)
                                 G.add_node(id, name = name, color = COLOR_SOURCE_TWEET, retweets = retweet_count)
                             elif network == "following":
                                 user_id = str(data['user']['id'])
@@ -231,38 +235,51 @@ def creation_of_network(G, network):
                                 #print(f"{user_id} and follow count {followers_count}")
                                 G.add_node(user_id, color = COLOR_REPLY_TWEET, followers = followers_count, time_zone=time_zone)   
 
-    # print("Number of Nodes:", len(list(G.nodes)))
-    # print("Number of Edges:", len(list(G.edges)))            
+    print("Number of Nodes:", len(list(G.nodes)))
+    print("Number of Edges:", len(list(G.edges)))            
 
     if REMOVE_NOISE:
         remove_noise(G)
-        # print("Number of Nodes:", len(list(G.nodes)))
-        # print("Number of Edges:", len(list(G.edges)))  
+        print("Number of Nodes:", len(list(G.nodes)))
+        print("Number of Edges:", len(list(G.edges)))  
 
-    # plot_graph(G, network)
+    #plot_graph(G, network)
 
     #plt.show()
 
 ##### MAIN
 
-# creation_of_network(T, "tweets")
-creation_of_network(F, "following")
-# plt.show()
 
-# metric_report(T, FOLDER + "_" + "tweets")
-metric_report(F, FOLDER + "_" + "following")
+if CREATION_TWEETS_NETWORK:
+    creation_of_network(T, "tweets")
 
-# community_metric_report(F, FOLDER + "_" + "following")
 
-# plot_community_graph(F, FOLDER, "following", 'Louvain')
+if CREATION_FOLLOWING_NETWORK:
+    creation_of_network(F, "following")
+
+
+
+if METRICS_REPORT and CREATION_TWEETS_NETWORK:
+    metric_report(T, FOLDER + "_" + "tweets")
+
+
+if METRICS_REPORT and CREATION_FOLLOWING_NETWORK:
+    metric_report(F, FOLDER + "_" + "following")
+
+
+
+if COMMUNITY_REPORT and CREATION_FOLLOWING_NETWORK:                 # Only for the following network
+    community_metric_report(F, FOLDER + "_" + "following")    
+
+
+
+if PLOT_COMMUNITIES and CREATION_FOLLOWING_NETWORK:                 # Only for the following network
+    plot_community_graph(F, FOLDER, "following", 'Louvain')
+
+
+plt.show()
 
 ### Notes
-# l = [ 5402612 , 169019017 , 612473,  21494202, 7589572 , 20271861, 143415291, 114731960 , 22595388 , 277021346 , 2190056023 , 110576660 , 8442372 , 125554853 , 86740435 , 18932416 , 1041442471 , 351065029 , 2362152704 , 41377658]
-
-# for id in l:
-#     str_id = (str(id))
-#     print(str_id)
-#     print(F.nodes(data=True)[str_id])
 
 # Structure.json
 # {A: {B: {C,D}}, {E:{F}}, G, H}
