@@ -33,7 +33,7 @@ putin = 'putinmissing'
 ottawa = 'ottawashooting'
 
 # Pick a folder
-FOLDER = charlie
+FOLDER = putin
 
 current_directory = os.getcwd()
 
@@ -46,8 +46,8 @@ T = nx.Graph()
 Tw = nx.Graph()
 
 
-ITERATIONS_DISTRIBUTION = True
-STATISTICS = False
+ITERATIONS_DISTRIBUTION = False
+STATISTICS = True
 
 
 # Dictionaries to track the retweets, favorite count and the number of reactions for each category
@@ -518,9 +518,9 @@ if STATISTICS:
     print(f"Total number of favorites       : {total_favorites}")        
 
     # Calculate averages
-    avg_reactions = avg_comp_and_print(total_reactions, source_tweets, "all reactions")
-    avg_retweets = avg_comp_and_print(total_retweets, source_tweets, "all retweets")
-    avg_favorites = avg_comp_and_print(total_favorites, source_tweets, "all favorites")
+    avg_reactions = avg_comp_and_print(total_reactions, total_source_tweets, "all reactions")
+    avg_retweets = avg_comp_and_print(total_retweets, total_source_tweets, "all retweets")
+    avg_favorites = avg_comp_and_print(total_favorites, total_source_tweets, "all favorites")
     print("\n\n") 
 
 
