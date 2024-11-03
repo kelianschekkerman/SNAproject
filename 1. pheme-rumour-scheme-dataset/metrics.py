@@ -4,17 +4,17 @@ import numpy as np
 import networkx as nx
 from joy_centralities_unweighted import all_centralities
 
-### The metrics functions used for the analysis ###
+### The metrics functions used for the analysis and statistics ###
 
-
-## LINK ANALYSIS, project instruction #3
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def hits(G, graph_name):
-    """ Perform the HITS algorithm on graph G, but first converts undirected graph to directed graph,
+    """ 
+    Perform the HITS algorithm on graph G, but first converts undirected graph to directed graph,
     and stores the outcome of the Hubs and Authorities in descending order in csv files.
+    
     @param G: The NetworkX graph.
-    @param graph_name: The name of the graph G. 
+    @param graph_name: The name of the graph G for storing outcome values in csv file. 
     """ 
     print("in hits")
     if not G.is_directed():
@@ -44,17 +44,14 @@ def hits(G, graph_name):
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def cluster_coefficient(G, graph_name):
-    """ Perfoms the cluster coefficient on graph G and stores the outcome in descending order 
+    """ 
+    Perfoms the cluster coefficient on graph G and stores the outcome in descending order 
     and as dictionary in csv files.
+    
     @param G: The NetworkX graph.
-    @param graph_name: The name of the graph G. 
+    @param graph_name: The name of the graph G for storing outcome values in csv file. 
     """ 
     cc = nx.clustering(G)
-
-    # with open(f'dict_clustercoeff_{graph_name}.csv', 'w') as f:
-    #     for key in cc_weigth.keys():
-    #         f.write("%s,%s\n"%(key,cc_weigth[key])) 
-
     cc = sorted(cc.items(), key = operator.itemgetter(1), reverse = True)
 
     # Put Descending list in csv
@@ -72,7 +69,9 @@ def cluster_coefficient(G, graph_name):
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def undirected_connected_components(G):
-    """ Prints the list of connected components of an undirected network.
+    """ 
+    Computes and prints the list of connected components of an undirected network.
+    
     @param G: The NetworkX graph.
     """
     cc = [len(c) for c in sorted(nx.connected_components(G), key=len, reverse=True)]
@@ -81,8 +80,11 @@ def undirected_connected_components(G):
     print(cc)
     return cc, cc_largest
 
+
 def directed_connected_components(G):
-    """ Prints the list of connected components of an directed network.
+    """ 
+    Computes and prints the list of connected components of an directed network.
+    
     @param G: The NetworkX graph.
     """
     strong_cc = [len(c) for c in sorted(nx.strongly_connected_components(G), key=len, reverse=True)]
@@ -102,6 +104,11 @@ def directed_connected_components(G):
 
 
 def compute_diameter(G):
+    """ 
+    Copmutes the diameter of the graph.
+    
+    @param G: The NetworkX graph.
+    """
     # Calculate all pairs shortest paths
     lengths = dict(nx.all_pairs_shortest_path_length(G))
 
@@ -120,6 +127,12 @@ def compute_diameter(G):
 
 
 def degree_distribution_undirected(G, G_name):
+    """ 
+    Computes various degree statistics of an undirected graph and writes the outcomes to a csv file.
+    
+    @param G: The NetworkX graph.
+    @param graph_name: The name of the graph G for storing outcome values in csv file. 
+    """ 
     # Calculate degree for each node in the undirected graph
     degrees = dict(G.degree())
     
@@ -142,6 +155,12 @@ def degree_distribution_undirected(G, G_name):
 
 
 def degree_distribution_directed(G, G_name):
+    """ 
+    Computes various degree statistics of an directed graph and writes the outcomes to a csv file.
+    
+    @param G: The NetworkX graph.
+    @param graph_name: The name of the graph G for storing outcome values in csv file. 
+    """ 
 
     # Calculate in-degree and out-degree for each node
     in_degrees = dict(G.in_degree())
@@ -182,6 +201,13 @@ def degree_distribution_directed(G, G_name):
 
 # Save the results to a CSV file
 def write_to_csv_file(metric_name, metric_result, graph_name):
+    """ 
+    Save the result of a metric to a CSV file corresponding to the graph.
+    
+    @param metric_name: The name of the metric being saved (e.g., "Average degree").
+    @param metric_result: The result of the metric.
+    @param graph_name: The name of the graph G for storing the metric results in csv file. 
+    """ 
     
     with open(f'csv\metrics_report_{graph_name}.csv','a', newline='\n') as file:
         writer = csv.writer(file)
@@ -191,13 +217,15 @@ def write_to_csv_file(metric_name, metric_result, graph_name):
 
 # METRICS, project instruction #1
 def metric_report(G, G_name):
-    """ Calculate the following metrics: number of vertices, number of edges,
+    """ 
+    Calculate the following metrics: number of vertices, number of edges,
     degree distribution, centrality indices, clustering coefficient,
     network diameter, density, number of connected components and, size of
     the connected components.
-    Save the results of the metrics to a csv file
+    Save the results of the metrics to a csv file.
+    
     @param G: The NetworkX graph.
-    @param graph_name: The name of the graph G (AA, DA, ..).
+    @param graph_name: The name of the graph G for storing the metric results in csv file. 
     """
     # Number of nodes and edges of G
     n_nodes = G.number_of_nodes()

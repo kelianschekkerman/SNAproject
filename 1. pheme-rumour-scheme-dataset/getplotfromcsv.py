@@ -3,7 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-# Define file paths
+##### Reads the centrality and HITS (Hubs and Authorities) values from CSV files and generates plots to visualize these metrics 
+##### for the events "Charlie Hebdo," "Germanwings Crash," and "Putin Missing" for comparisons between the events.
+
+# Define file paths of the csv files of the centrailties results in a dictionary
 file_paths_centrality = {
     "charlie_following_betweenness": "csv/charlie_following/betweeness_centrality_desc_charliehebdo_following.csv",
     "charlie_following_closeness": "csv/charlie_following/closeness_centrality_desc_charliehebdo_following.csv",
@@ -36,6 +39,7 @@ file_paths_centrality = {
     "putin_tweets_eigenvector": "csv/putin_tweets/eigenvector_desc_putinmissing_tweets.csv",
 }
 
+# Define file paths of the csv files of the HITS results in a dictionary
 file_paths_hits = {
     "charlie_authorities": "csv\charlie_following\hits_authorities_charliehebdo_following.csv",
     "charlie_hubs": "csv\charlie_following\hits_hubs_charliehebdo_following.csv",
@@ -47,7 +51,7 @@ file_paths_hits = {
     "putin_hubs": "csv\putin_following\hits_hubs_putinmissing_following.csv",
 }
 
-# Define plot configurations
+# Define plot configurations of the centrailty plots
 plot_configs_centrality = [
     # Following data
     ("Following Betweenness", ["charlie_following_betweenness", "germanwings_crash_following_betweenness", "putin_following_betweenness"]),
@@ -62,6 +66,7 @@ plot_configs_centrality = [
     ("Tweets Eigenvector", ["charlie_tweets_eigenvector", "germanwings_crash_tweets_eigenvector", "putin_tweets_eigenvector"])
 ]
 
+# Define plot configurations of the HITS plots
 plot_configs_hits = [
     ("Authorities", ["charlie_authorities", "germanwings_authorities", "putin_authorities"]),
     ("Hubs", ["charlie_hubs", "germanwings_hubs", "putin_hubs"])

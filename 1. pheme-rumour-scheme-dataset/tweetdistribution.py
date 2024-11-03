@@ -27,6 +27,7 @@ class Tweet:
 
 ### Global variables
 
+# Folders
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
@@ -35,10 +36,9 @@ ottawa = 'ottawashooting'
 # Pick a folder
 FOLDER = putin
 
-current_directory = os.getcwd()
 
-# Target timezone (Amsterdam)
-amsterdam_tz = pytz.timezone('Europe/Amsterdam')
+# Current directory of where this file is stored
+current_directory = os.getcwd()
 
 
 # Network of tweets
@@ -46,12 +46,12 @@ T = nx.Graph()
 Tw = nx.Graph()
 
 
-ITERATIONS_DISTRIBUTION = False
+# Two options for getting different information:
+ITERATIONS_DISTRIBUTION = True
 STATISTICS = True
 
 
-# Dictionaries to track the retweets, favorite count and the number of reactions for each category
-# Define a global dictionary for statistics
+# Global dictionary to track the retweets, favorite count and the number of reactions for each category
 statistics = {
     'misinformation': defaultdict(list),
     'true': defaultdict(list),
@@ -59,11 +59,11 @@ statistics = {
 }
 
 
-
-# Retrieve the timestamp given by a file in the folder
 def get_timestamp(folder):
     """
-    Function to get the timestamp given by current folder
+    Function to get the timestamp of the source in the current folder.
+
+    @param folder: the current folder.
     """
     for root, dirs, files in os.walk(folder):
         if "source-tweet" in root:
@@ -77,16 +77,30 @@ def get_timestamp(folder):
                     return utc_time
 
 
-# Add reaction to network G and place edge between reaction and its parent
 def add_reaction_tweet(G, parent, tweet_id, t_stamp):
+    """
+    Add reaction tweet to network G and place edge between reaction and its parent.
+
+    @param G: The NetworkX Graph.
+    @param parent: The ID of the parent tweet to which the tweet is reacting.
+    @param tweet_id: The ID of the reaction tweet.
+    """
     G.add_node(tweet_id, color = 'black', timestamp = t_stamp)
 
     # Place edge
     G.add_edge(parent, tweet_id)
 
 
-# Add the right color to the tweet
 def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
+    """
+    Add source tweet to network G with appropriate color based on misinformation and truth status.
+    
+    @param G: The NetworkX Graph.
+    @param source_tweet: The ID of the source tweet.
+    @param t_stamp: The timestamp of when the tweet was created.
+    @param misinfo: A boolean indicating whether the tweet contains misinformation.
+    @param true: A boolean indicating whether the tweet is true.
+    """
     c = "yellow"
 
     if misinfo and true:    # Uncertain
@@ -102,7 +116,6 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
 
         
 
-# Export 
 # This function is from Bachelor Thesis of Joy Kwant
 def position_to_csv(pos, graph_name):
     """ Exports dictionary of positions of node, created by NetworkX spring_layout.
@@ -114,7 +127,6 @@ def position_to_csv(pos, graph_name):
             f.write("%s,%s,%s\n"%(key, pos[key][0], pos[key][1]))
 
 
-# Import
 # This function is from Bachelor Thesis of Joy Kwant
 def csv_dict_position(pos, graph_name):
     """ Imports the position dictionary, for each node there is a x,y-coordinate.
@@ -128,9 +140,16 @@ def csv_dict_position(pos, graph_name):
             pos[row[0]] = [float(row[1]), float(row[2])]    
 
 
-
-# Function to find the source tweet's misinformation and true values for a reply tweet
 def find_source_info(tweet_id, tweets_dict):
+    """
+    Traverse the tweet chain to find the source tweet and retrieve its misinformation and truth values.
+    
+    @param tweet_id: The ID of the reply tweet for which to find the source tweet information.
+    @param tweets_dict: A dictionary mapping tweet IDs to tweet objects.
+    
+    @return: A tuple containing the misinformation and truth values of the source tweet,
+             or (None, None) if no source tweet is found.
+    """
     # Start from the given tweet and traverse up the chain to find the source tweet
     current_tweet = tweets_dict.get(tweet_id)
 
@@ -146,8 +165,17 @@ def find_source_info(tweet_id, tweets_dict):
     return None, None
 
 
-# Add the reply to the dictionary of the type of the source-tweet
-def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter):    
+def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter):
+    """
+    Add a reply tweet to the appropriate dictionary based on the source tweet's misinformation and truth values.
+    
+    @param misinfo_dict: A dictionary to store tweets identified as misinformation, organized by iteration.
+    @param true_dict: A dictionary to store tweets identified as true, organized by iteration.
+    @param uncertain_dict: A dictionary to store tweets identified as uncertain, organized by iteration.
+    @param tweets_dict: A dictionary consisiting the tweet objects.
+    @param tweet: The reply tweet object.
+    @param current_iter: The current iteration for organizing tweets in the dictionaries.
+    """    
     # Find misinformation and true values for a specific reply tweet (e.g., tweet 3)
     is_misinfo, is_true = find_source_info(tweet_id=tweet.tweet_id, tweets_dict=tweets_dict)
 
@@ -166,20 +194,37 @@ def add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_di
         uncertain_dict[current_iter].append(tweet.tweet_id)
 
 
-# Add the tweet to the network G
 def add_tweet_to_network(G, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iter):
+    """
+    Add a tweet to the network graph G, distinguishing between source tweets and reply tweets.
+    Also adds reply tweets to a specific dictionary with 'add_replies_to_dictionary'.
+    
+    @param G: The NetworkX Graph.
+    @param tweet: The tweet object to be processed.
+    @param misinfo_dict: A dictionary to store tweets identified as misinformation, organized by iteration.
+    @param true_dict: A dictionary to store tweets identified as true, organized by iteration.
+    @param uncertain_dict: A dictionary to store tweets identified as uncertain, organized by iteration.
+    @param tweets_dict: A dictionary consisiting the tweet objects.
+    @param current_iter: The current iteration for organizing tweets in the dictionaries.
+    """
     # Add the tweet to the graph
     if tweet.type == "source":
-        # print("source tweet")
         add_source_tweet(G, source_tweet=tweet.tweet_id, t_stamp=tweet.timestamp, misinfo=tweet.misinformation, true=tweet.true)
     else:   # Reply tweet
-        # print("reaction")
         add_reaction_tweet(G, parent=tweet.reply_to, tweet_id=tweet.tweet_id, t_stamp=tweet.timestamp)
         add_replies_to_dictionary(misinfo_dict, true_dict, uncertain_dict, tweets_dict, tweet, current_iter)
 
             
-# Plot the graph of netwrok G
 def plot_graph(G, network, current_iteration, lower, upper):
+    """
+    Visualize the graph of network G using Matplotlib, based on node positions from a CSV file.
+    
+    @param G: The NetworkX Graph to be plotted.
+    @param network: The name of the network, used to locate the corresponding position CSV file.
+    @param current_iteration: The current iteration.
+    @param lower: The lower limit for the time range displayed in the plot (first timestamp).
+    @param upper: The upper limit for the time range displayed in the plot (last timestamp).
+    """
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # Fetch the positions of the nodes in the csv of the network of the FOLDER
@@ -195,9 +240,7 @@ def plot_graph(G, network, current_iteration, lower, upper):
     # Remove those extra nodes from the current network
     G.remove_nodes_from(nodes_to_remove)   
     
-    # print(f" Nodes in the graph:  {G.number_of_nodes()} ")
-    # print(len(pos.keys())) 
-    
+    # Retrieve the node colors
     node_color = [G.nodes[n]['color'] for n in G.nodes]
 
     # Draw network
@@ -211,8 +254,7 @@ def plot_graph(G, network, current_iteration, lower, upper):
         alpha = 0.4,
     )
 
-
-    # Create a legend using mpatches for the source and reply colors
+    # Create a legend using mpatches for the three categories for the source tweets and reply colors
     misinfo_patch = mpatches.Patch(color='red', label='Misformation')
     facts_patch = mpatches.Patch(color='green', label='Facts')
     uncertain_patch = mpatches.Patch(color='blue', label='Uncertain')
@@ -233,12 +275,19 @@ def plot_graph(G, network, current_iteration, lower, upper):
     # Save the figure
     plt.savefig(os.path.join("../Graphs/tweet_distribution", f"tweet_dist_{FOLDER}_iter={current_iteration}"))
 
-    #plt.show()
 
-
-
-# The bar plot for the types misinformation, true and uncertain, showing for each iteration
 def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timestamp, last_timestamp, iteration_duration):
+    """
+    Generate a bar plot for the counts of misinformation, true, and uncertain replies across iterations.
+    
+    @param misinfo_dict: Dictionary with counts of misinformation replies per iteration.
+    @param true_dict: Dictionary with counts of true replies per iteration.
+    @param uncertain_dict: Dictionary with counts of uncertain replies per iteration.
+    @param max_iter: The total number of iterations.
+    @param first_timestamp: The starting timestamp of the event.
+    @param last_timestamp: The ending timestamp of the event.
+    @param iteration_duration: The duration of each iteration.
+    """
     # List of with all iterations
     all_iterations = list(range(1, max_iter + 1))
 
@@ -247,29 +296,20 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timest
     true_values = [true_dict.get(i, 0) for i in all_iterations]
     uncertain_values = [uncertain_dict.get(i, 0) for i in all_iterations]
 
-    bar_width = 0.25  # Width of each bar
-    indices = np.arange(max_iter)  # The position on the x-axis for each group of bars
+    bar_width = 0.25                # Width of each bar
+    indices = np.arange(max_iter)   # The position on the x-axis for each group of bars
 
     # Create a bar plot
     fig, ax = plt.subplots()
 
     # Plot the bars for each category, shifting their positions by bar_width
-    p1 = ax.bar(indices - bar_width, misinfo_values, bar_width, label='Misinformation', color='red')
-    p2 = ax.bar(indices, true_values, bar_width, label='True', color='green')
-    p3 = ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
+    ax.bar(indices - bar_width, misinfo_values, bar_width, label='Misinformation', color='red')
+    ax.bar(indices, true_values, bar_width, label='True', color='green')
+    ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
 
     # Format iteration_duration as hours, minutes, and seconds
     iteration_duration_str = ( f"{iteration_duration.days}d " if iteration_duration.days > 0 else ""
                             ) + f"{iteration_duration.seconds // 3600}h {iteration_duration.seconds % 3600 // 60}m {iteration_duration.seconds % 60}s"
-
-
-    # Labeling
-    # ax.set_xlabel('Iteration')
-    # ax.set_ylabel('Number of Replies')
-    # ax.set_title(f'Number of Replies per Iteration of {FOLDER}')
-    # ax.set_xticks(indices)
-    # ax.set_xticklabels([f't={i}' for i in all_iterations])
-    # ax.legend()
 
     # Labeling
     ax.set_xlabel(f'Iteration (Duration is {iteration_duration_str})')
@@ -288,17 +328,22 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timest
             ha='center', va='top', fontsize=10, color='blue')
 
     ax.legend()
-
-    # Show plot
-
     plt.tight_layout()
+    
     # Save the figure
     plt.savefig(os.path.join("../Graphs/tweet_distribution/", f"barlot_tweets_{FOLDER}"))
 
-    plt.show()
-
 
 def add_tweet_info(stat_dictionary, tweet_id, retweet_count, favorite_count, reaction_count):
+    """
+    Add tweet engagement statistics to the specified dictionary.
+    
+    @param stat_dictionary: The dictionary where tweet information will be stored.
+    @param tweet_id: The ID of the source tweet being added.
+    @param retweet_count: The number of retweets for the tweet.
+    @param favorite_count: The number of favorites (likes) for the tweet.
+    @param reaction_count: The total number of reactions for the tweet.
+    """
     stat_dictionary[tweet_id] = {
         'retweet_count': retweet_count,
         'favorite_count': favorite_count,
@@ -306,6 +351,15 @@ def add_tweet_info(stat_dictionary, tweet_id, retweet_count, favorite_count, rea
     }
 
 def add_to_statistic_dictionary(is_misinfo, is_true, tweet_id, retweet_count, favorite_count, reaction_count):
+    """
+    Add tweet engagement statistics to the specified dictionary.
+    
+    @param stat_dictionary: The dictionary where tweet information will be stored.
+    @param tweet_id: The ID of the tweet being added.
+    @param retweet_count: The number of retweets for the tweet.
+    @param favorite_count: The number of favorites (likes) for the tweet.
+    @param reaction_count: The total number of reactions (replies, etc.) for the tweet.
+    """
     if is_misinfo and is_true:
         # Uncertain
         target_dict = statistics['uncertain']
@@ -321,11 +375,20 @@ def add_to_statistic_dictionary(is_misinfo, is_true, tweet_id, retweet_count, fa
     
 
 def avg_comp_and_print(x, y, avg_string):
+    """
+    Calculate and print the average of x over y, with a specified description.
+    
+    @param x: The numerator for the average calculation.
+    @param y: The denominator for the average calculation.
+    @param avg_string: A string describing what is being averaged (e.g., "retweets").
+    """
     avg_outcome = x / y if y > 0 else 0
     print(f"Average number of {avg_string} per source tweet   : {avg_outcome:.2f}") 
 
 
-##### MAIN
+
+
+##### MAIN #####
 
 
 ### First loop: Getting the first timestamp of event
@@ -357,6 +420,7 @@ for root, dirs, files in os.walk(current_directory):
             # Full file path
             file_path = os.path.join(root, file)
 
+            # Retrieve reliability information
             if "annotation.json" in file_path:
                 with open(file_path, 'r') as file:
                     data = json.load(file)
@@ -401,7 +465,6 @@ for root, dirs, files in os.walk(current_directory):
                     # Add tweet to the appropriate statistics dictionary
                     add_to_statistic_dictionary(is_misinfo, is_true, id, retweet_count, favorite_count, reaction_count)
 
-
                     # Reset the info for next thread folder
                     is_misinfo = None
                     is_true = None
@@ -413,10 +476,6 @@ for root, dirs, files in os.walk(current_directory):
 
 
 
-# ###########################################################################################################################
-
-
-
 # Sort tweets on timestamp
 tweets.sort(key=lambda tweet: tweet.timestamp)
 
@@ -425,11 +484,9 @@ tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
 
 
 if ITERATIONS_DISTRIBUTION:
-    # # Based on the timestamps of the first and last tweet, determine the iteration duration
+    # Based on the timestamps of the first and last tweet, determine the iteration duration
     max_iter = 5
     iteration_duration = (last_timestamp - first_timestamp)/max_iter
-
-    print(f"iter duur : {iteration_duration} ")
 
     misinfo_dict = defaultdict(list)
     true_dict = defaultdict(list)
@@ -455,7 +512,6 @@ if ITERATIONS_DISTRIBUTION:
             add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
             # Then plot current iteration and increase iteration counter
             upper = (current_iteration * iteration_duration) + first_timestamp
-            print(upper)
             lower = ((current_iteration - 1) * iteration_duration) + first_timestamp
             plot_graph(Tw, "tweets", current_iteration, lower, upper)
             current_iteration += 1
@@ -471,7 +527,7 @@ if ITERATIONS_DISTRIBUTION:
 
     # Barplots
     plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timestamp, last_timestamp, iteration_duration)
-
+    plt.show()
 
 
 
