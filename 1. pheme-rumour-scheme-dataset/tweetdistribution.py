@@ -46,8 +46,8 @@ T = nx.Graph()
 Tw = nx.Graph()
 
 
-ITERATIONS_DISTRIBUTION = False
-STATISTICS = True
+ITERATIONS_DISTRIBUTION = True
+STATISTICS = False
 
 
 # Dictionaries to track the retweets, favorite count and the number of reactions for each category
@@ -259,7 +259,8 @@ def plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timest
     p3 = ax.bar(indices + bar_width, uncertain_values, bar_width, label='Uncertain', color='blue')
 
     # Format iteration_duration as hours, minutes, and seconds
-    iteration_duration_str = f"{iteration_duration.seconds // 3600}h {iteration_duration.seconds % 3600 // 60}m {iteration_duration.seconds % 60}s"
+    iteration_duration_str = ( f"{iteration_duration.days}d " if iteration_duration.days > 0 else ""
+                            ) + f"{iteration_duration.seconds // 3600}h {iteration_duration.seconds % 3600 // 60}m {iteration_duration.seconds % 60}s"
 
 
     # Labeling
@@ -427,6 +428,8 @@ if ITERATIONS_DISTRIBUTION:
     # # Based on the timestamps of the first and last tweet, determine the iteration duration
     max_iter = 5
     iteration_duration = (last_timestamp - first_timestamp)/max_iter
+
+    print(f"iter duur : {iteration_duration} ")
 
     misinfo_dict = defaultdict(list)
     true_dict = defaultdict(list)
