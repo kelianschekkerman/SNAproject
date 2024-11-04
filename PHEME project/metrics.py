@@ -2,10 +2,9 @@ import csv
 import operator
 import numpy as np
 import networkx as nx
-from joy_centralities_unweighted import all_centralities
+from centralities_unweighted import all_centralities
 
 ### The metrics functions used for the analysis and statistics ###
-
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def hits(G, graph_name):
@@ -190,7 +189,6 @@ def degree_distribution_directed(G, G_name):
     out_degree_median = np.median(out_degree_values)
     write_to_csv_file("Median out-degree", out_degree_median, G_name)
 
-
     # Print results
     print("In-Degree Centrality Distribution:")
     print(f"Minimum: {in_degree_min}, Maximum: {in_degree_max}, Average: {in_degree_avg:.2f}, Median: {in_degree_median}")
@@ -212,7 +210,6 @@ def write_to_csv_file(metric_name, metric_result, graph_name):
     with open(f'csv\metrics_report_{graph_name}.csv','a', newline='\n') as file:
         writer = csv.writer(file)
         writer.writerow([metric_name, metric_result])
-
 
 
 # METRICS, project instruction #1

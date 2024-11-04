@@ -13,7 +13,6 @@ from community_metrics import community_metric_report, remove_noise, plot_commun
 charlie = 'charliehebdo'
 german_airplane = 'germanwings-crash'
 putin = 'putinmissing'
-ottawa = 'ottawashooting'
 
 # Pick a folder
 FOLDER = german_airplane
@@ -21,12 +20,10 @@ FOLDER = german_airplane
 # CHoose to remove isolated nodes in the graph
 REMOVE_NOISE = False
 
-
 # Color setting for the different type of tweets
 COLOR_SOURCE_TWEET = "red"
 COLOR_REPLY_TWEET = "green"
 COLOR_RETWEET_TWEET = "blue"
-
 
 # For calling functions
 CREATION_TWEETS_NETWORK = False
@@ -34,7 +31,6 @@ CREATION_FOLLOWING_NETWORK = True
 METRICS_REPORT = False
 COMMUNITY_REPORT = False
 PLOT_COMMUNITIES = True
-
 
 # Get the current working directory
 current_directory = os.getcwd()
@@ -44,9 +40,6 @@ T = nx.Graph()
 
 # Directed graph for following network
 F = nx.DiGraph()
-
-
-
 
 def add_tweet(G, parent, tweet_id):
     """
@@ -63,7 +56,7 @@ def add_tweet(G, parent, tweet_id):
 
     # Place edge
     G.add_edge(parent, tweet_id)
-    
+
 
 def tweet_connections(G, thread, parent = None):
     """
@@ -114,7 +107,6 @@ def csv_dict_position(pos, graph_name):
         for row in data:
             pos.setdefault(row[0])
             pos[row[0]] = [float(row[1]), float(row[2])]               
-
 
 
 def plot_graph(G, network):
@@ -184,8 +176,6 @@ def plot_graph(G, network):
     ax.margins(0.1, 0.05)
     fig.tight_layout()
     plt.axis("off")
-
-
 
 def creation_of_network(G, network):
     """ 
@@ -279,36 +269,23 @@ def creation_of_network(G, network):
         print("Number of Edges:", len(list(G.edges))) 
 
 
-
-
-
 ##### MAIN
-
-
 if CREATION_TWEETS_NETWORK:
     creation_of_network(T, "tweets")
     #plot_graph(T, "tweets")
-
 
 if CREATION_FOLLOWING_NETWORK:
     creation_of_network(F, "following")
     #plot_graph(F, "following")
 
-
-
 if METRICS_REPORT and CREATION_TWEETS_NETWORK:
     metric_report(T, FOLDER + "_" + "tweets")
-
 
 if METRICS_REPORT and CREATION_FOLLOWING_NETWORK:
     metric_report(F, FOLDER + "_" + "following")
 
-
-
 if COMMUNITY_REPORT and CREATION_FOLLOWING_NETWORK:            # Only for the following network
     community_metric_report(F, FOLDER + "_" + "following")    
-
-
 
 if PLOT_COMMUNITIES and CREATION_FOLLOWING_NETWORK:            # Only for the following network
     # When plotting the communities the isolated node should be removed
@@ -325,34 +302,4 @@ if PLOT_COMMUNITIES and CREATION_FOLLOWING_NETWORK:            # Only for the fo
     if FOLDER == "putinmissing" or FOLDER == "germanwings-crash":
         plot_community_graph(F, FOLDER, "following", pos, 'Girvan Newman')
 
-
 plt.show()
-
-
-
-
-
-### Notes
-
-# Structure.json
-# {A: {B: {C,D}}, {E:{F}}, G, H}
-# A -- B -- C,D
-#   -- E -- F
-#   -- G
-#   -- H
-
-
-# from annotation.json
-# 'isrumour'        different colour in graph for rumour?
-# mediatype?
-
-# from <tweetid>.json from reaction folder and source tweet folder
-# created_at
-
-
-# retweet.json > for the source tweet
-
-
-# Networks:
-# - tweets
-# - users

@@ -6,9 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
-
 from networkx.algorithms.community.centrality import girvan_newman
-
 
 # For Clustering colors
 colors = mcolors.CSS4_COLORS
@@ -18,7 +16,6 @@ del color_list[13:17]
 colors2 = mcolors.XKCD_COLORS
 html_colors2 = list(colors2.values())
 color_list = color_list + html_colors2
-
 
 # This function is from the Bachelor Thesis of Joy Kwant
 def remove_noise(G):
@@ -133,7 +130,6 @@ def plot_community_graph(G, FOLDER, network, pos, c_name = ' '):
     
     font = {"color": "k", "fontweight": "bold", "fontsize": 10}           # Title/legend.
     font["color"] = "black"                                               # Change font color for legend.
-      
     
     # Remove some colors that give unclarity in the graph
     if 'putin' in FOLDER:
@@ -142,7 +138,6 @@ def plot_community_graph(G, FOLDER, network, pos, c_name = ' '):
             del color_list[5]
             del color_list[11]
     
-
     # Initialize variables for community tracking and color dictionary
     cluster_list = []
     matchpatch_list = []
@@ -158,7 +153,6 @@ def plot_community_graph(G, FOLDER, network, pos, c_name = ' '):
     elif c_name == 'Louvain':
         remove_noise(G) 
         cluster_list = nx.community.louvain_communities(G, weight= 'weight', seed=101)
-
 
     # Assign colors to each node per community
     for community in cluster_list:
@@ -178,7 +172,6 @@ def plot_community_graph(G, FOLDER, network, pos, c_name = ' '):
         com = com + 1
         total_members += members  
      
-
     # List of colors. 
     node_color = [dict_node_color[n] for n in G.nodes()] 
 
@@ -215,10 +208,3 @@ def plot_community_graph(G, FOLDER, network, pos, c_name = ' '):
     ax.margins(0.1, 0.05)
     fig.tight_layout()
     plt.axis("off")
-
-
-
-
-
-
-

@@ -72,6 +72,7 @@ plot_configs_hits = [
     ("Hubs", ["charlie_hubs", "germanwings_hubs", "putin_hubs"])
 ]
 
+# Toggle different plots
 # file_paths = file_paths_centrality
 # plot_configs = plot_configs_centrality
 file_paths = file_paths_hits

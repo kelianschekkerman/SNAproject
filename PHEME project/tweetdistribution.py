@@ -1,6 +1,5 @@
 import os
 import csv
-import pytz
 import json
 import numpy as np
 import networkx as nx
@@ -8,7 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from datetime import datetime
 from collections import defaultdict
-
 
 # Data structure to store a tweet
 class Tweet:
@@ -24,7 +22,6 @@ class Tweet:
     def __str__(self):
         return f'Tweet with ID {self.tweet_id}: type={self.type}, timestamp={self.timestamp}, misinformation={self.misinformation}, true={self.true} reply_to={self.reply_to}'
 
-
 ### Global variables
 
 # Folders
@@ -36,20 +33,16 @@ ottawa = 'ottawashooting'
 # Pick a folder
 FOLDER = putin
 
-
 # Current directory of where this file is stored
 current_directory = os.getcwd()
-
 
 # Network of tweets
 T = nx.Graph()
 Tw = nx.Graph()
 
-
 # Two options for getting different information:
 ITERATIONS_DISTRIBUTION = True
 STATISTICS = True
-
 
 # Global dictionary to track the retweets, favorite count and the number of reactions for each category
 statistics = {
@@ -57,7 +50,6 @@ statistics = {
     'true': defaultdict(list),
     'uncertain': defaultdict(list)
 }
-
 
 def get_timestamp(folder):
     """
@@ -113,8 +105,7 @@ def add_source_tweet(G, source_tweet, t_stamp, misinfo, true):
         c = 'blue'    
     
     G.add_node(source_tweet, color = c, timestamp = t_stamp)
-
-        
+ 
 
 # This function is from Bachelor Thesis of Joy Kwant
 def position_to_csv(pos, graph_name):
@@ -350,6 +341,7 @@ def add_tweet_info(stat_dictionary, tweet_id, retweet_count, favorite_count, rea
         'reaction_count': reaction_count
     }
 
+
 def add_to_statistic_dictionary(is_misinfo, is_true, tweet_id, retweet_count, favorite_count, reaction_count):
     """
     Add tweet engagement statistics to the specified dictionary.
@@ -386,25 +378,19 @@ def avg_comp_and_print(x, y, avg_string):
     print(f"Average number of {avg_string} per source tweet   : {avg_outcome:.2f}") 
 
 
-
-
 ##### MAIN #####
-
 
 ### First loop: Getting the first timestamp of event
 first_timestamp = None
 
 # Walk through the directory
 for root, dirs, files in os.walk(current_directory):
-    
     if FOLDER in root:
         first_folder = os.path.join(root, dirs[0])  # First folder
         first_timestamp = get_timestamp(first_folder)
-
         break
 
 last_timestamp = first_timestamp
-
 
 ### Second loop: Appending the source tweets and reaction to the list of all Tweets
 tweets = []
@@ -474,14 +460,11 @@ for root, dirs, files in os.walk(current_directory):
                     if time_stamp_utc0 > last_timestamp:
                         last_timestamp = time_stamp_utc0
 
-
-
 # Sort tweets on timestamp
 tweets.sort(key=lambda tweet: tweet.timestamp)
 
 # Dictionary for tweets for the barplots
 tweets_dict = {tweet.tweet_id: tweet for tweet in tweets}
-
 
 if ITERATIONS_DISTRIBUTION:
     # Based on the timestamps of the first and last tweet, determine the iteration duration
@@ -519,7 +502,6 @@ if ITERATIONS_DISTRIBUTION:
             # Add tweet to current iteration
             add_tweet_to_network(Tw, tweet, misinfo_dict, true_dict, uncertain_dict, tweets_dict, current_iteration)
 
-
     # Dictionaries for barplots
     misinfo_dict = {key: len(value) for key, value in misinfo_dict.items()}
     true_dict = {key: len(value) for key, value in true_dict.items()}
@@ -529,10 +511,7 @@ if ITERATIONS_DISTRIBUTION:
     plot_barplot(misinfo_dict, true_dict, uncertain_dict, max_iter, first_timestamp, last_timestamp, iteration_duration)
     plt.show()
 
-
-
 if STATISTICS:
-
     total_source_tweets = 0
     total_reactions = 0
     total_retweets = 0
@@ -567,7 +546,6 @@ if STATISTICS:
         avg_favorites = avg_comp_and_print(favorites, source_tweets, "favorites")
         print("\n") 
 
-
     print(f"Total number of source tweets   : {total_source_tweets}")    
     print(f"Total number of reactions       : {total_reactions}")    
     print(f"Total number of retweets        : {total_retweets}")
@@ -577,82 +555,4 @@ if STATISTICS:
     avg_reactions = avg_comp_and_print(total_reactions, total_source_tweets, "all reactions")
     avg_retweets = avg_comp_and_print(total_retweets, total_source_tweets, "all retweets")
     avg_favorites = avg_comp_and_print(total_favorites, total_source_tweets, "all favorites")
-    print("\n\n") 
-
-
-
-
-###########################################################################################################################
-
-
-# t = iter (start 0)
-# LOOP 2: Per Folder van een source tweet
-    # convert time to amsterdam time
-    # tweet_time = timestamp - tweet start
-    # 
-    # Checken hoort die bij current iter (tweet_time (- tweet_start?) <(=?) t * iteration_duration + tweet_start)
-        # - Ja : voeg toe aan Graph
-        # - Nee: Plotten we current graph
-        #        increase iter
-        #        toevoegen aan (new current) graph
-
-
-# print(f"First time: {first_timestamp}")
-# print(f"Last time: {last_timestamp}")
-# iter_duration = (last_timestamp - first_timestamp)/5
-# print(f"iter duration {iter_duration}")
-# t1_start = first_timestamp + iter_duration
-# if first_timestamp > t1_start:
-#     print("jippieeeeee")
-# else:
-#     print("oh nooooo")
-# # print(f"start of t1: {first_timestamp + iter_duration}")
-
-# # print(first_timestamp + ((last_timestamp - first_timestamp)/5))
-
-
-
-# LOOP 1: voor 1ste een laaste tijd
-
-# 10 iteration berekenen  -->> [t0, t1, t2, t3]
-
-# begintime of t_iter = iter * duration + tweet_start
-
-
-# TODO:
-# - MISINFORMATION or TRUE colors
-# - Plots 
-# - Graphs
-# - Reactions?
-
-# Tweet (node)
-# - ID
-# - source tweet/reply 
-# - (misinformation, true): misinformation (1,0) / true (0,1) / uncertain (0,0), (1,1)
-# - colour
-#       - source tweet -> misinformation -> colour red/green
-#       - reply -> colour black
-# - converted time stamp
-# - in reply to
-
-# Barplot
-# - source tweet/reply 
-# - (misinformation, true): misinformation (1,0) / true (0,1) / uncertain (0,0), (1,1)
-# - colour
-# - 3 lists of tuples (backup option = 6 arrays)
-#       misinformation  =  [(source, reply)]
-#       true            =  [(source, reply)]
-#       uncertain       =  [(source, reply)]
-#
-#       example = [(2, 0), (3, 2), (5, 4), (6, 10), ...]
-#                    t0      t1      t2      t3     t..
-# what is t?
-# t0 = starting point (first tweet)
-# t_max (max iter) = end point (final tweet)
-# number of iterations (= 5? 10?)
-# time per iteration = t_max-t0/number of iterations
-
-# For (t0 -> tmax)
-#   if t < t_iteration
-#       add nodes within iteration
-#       draw iteration
+    print("\n\n")
